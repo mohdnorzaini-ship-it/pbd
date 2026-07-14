@@ -323,6 +323,62 @@
 
     </div>
 
+    <!-- ================= MODAL SET SEMULA KATA LALUAN (SELF-RECOVERY) ================= -->
+    <div id="modal-reset-password" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <!-- Header Modal -->
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                    <i class="fas fa-key text-blue-600"></i>
+                    <span>Set Semula Kata Laluan</span>
+                </h3>
+                <button onclick="toggleResetModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Form Modal -->
+            <form id="form-reset-password" onsubmit="handleResetPasswordSubmit(event)" class="p-6 space-y-4">
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    Sila lengkapkan butiran pengesahan identiti anda seperti yang telah didaftarkan sebelum ini untuk menetapkan kata laluan baharu.
+                </p>
+
+                <!-- Input E-mel -->
+                <div>
+                    <label for="reset-email" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">E-mel DELIMa Terdaftar</label>
+                    <input type="email" id="reset-email" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="g-12345678@moe-dl.edu.my">
+                </div>
+
+                <!-- Input Nama Penuh -->
+                <div>
+                    <label for="reset-name" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Nama Penuh (Huruf Besar)</label>
+                    <input type="text" id="reset-name" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="MOHD NORZAINI BIN MOHD ZAIN">
+                </div>
+
+                <!-- Input Kod CM -->
+                <div>
+                    <label for="reset-code" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Kod Pengguna (Contoh: CM36)</label>
+                    <input type="text" id="reset-code" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="CM36">
+                </div>
+
+                <!-- Input Kata Laluan Baru -->
+                <div class="pt-2 border-t border-slate-100">
+                    <label for="reset-new-password" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Kata Laluan Baharu</label>
+                    <input type="password" id="reset-new-password" required minlength="6" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="Minimum 6 aksara">
+                </div>
+
+                <!-- Footer / Butang Tindakan -->
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="toggleResetModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-colors">
+                        Simpan Kata Laluan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ================= MODAL TETAPAN CONFIG FIREBASE ================= -->
     <div id="modal-config" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
@@ -668,7 +724,8 @@
                 let newVisitCount = data.visitCount || 1;
                 const sessionKey = `pbd_session_active_${docId}`;
                 
-                if (!sessionStorage.getItem(sessionKey)) {
+                // Benarkan kemaskini jika log masuk manual (isExplicitLogin) ATAU belum ada sesi aktif
+                if (isExplicitLogin || !sessionStorage.getItem(sessionKey)) {
                     newVisitCount = (data.visitCount || 0) + 1;
                     data.visitCount = newVisitCount;
                     data.lastLogin = new Date().toISOString();
@@ -789,7 +846,8 @@
                     let newVisitCount = data.visitCount || 1;
                     const sessionKey = `pbd_session_active_${docId}`;
                     
-                    if (!sessionStorage.getItem(sessionKey)) {
+                    // Tambah bilangan akses jika tindakan log masuk eksplisit dilakukan ATAU kunci sesi tiada
+                    if (isExplicitLogin || !sessionStorage.getItem(sessionKey)) {
                         newVisitCount = (data.visitCount || 0) + 1;
                         await updateDoc(userDocRef, {
                             visitCount: newVisitCount,
@@ -1051,10 +1109,95 @@
             return date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' }) + ", " + strTime;
         }
 
-        // --- STREAMING_CHUNK: Forgot password... ---
-        // --- INTERAKSI KATA LALUAN LUPA ---
+        // --- STREAMING_CHUNK: Implementing Forgotten Password Reset Logic... ---
+        // --- PENGURUSAN SET SEMULA KATA LALUAN MANDIRI (Forgot Password) ---
         window.handleForgotPassword = function() {
-            showToast("Bantuan Kata Laluan", "Sistem ini menggunakan pendaftaran profil berasaskan pangkalan data mudah. Sila masukkan sebarang kata laluan pilihan anda semasa pendaftaran.");
+            // Bersihkan borang modal sebelum buka
+            document.getElementById('form-reset-password').reset();
+            toggleResetModal();
+        }
+
+        window.toggleResetModal = function() {
+            const modal = document.getElementById('modal-reset-password');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        window.handleResetPasswordSubmit = async function(event) {
+            event.preventDefault();
+            
+            const emailInput = document.getElementById('reset-email').value.trim().toLowerCase();
+            const nameInput = document.getElementById('reset-name').value.trim().toUpperCase();
+            const codeInput = document.getElementById('reset-code').value.trim().toUpperCase();
+            const newPasswordInput = document.getElementById('reset-new-password').value;
+
+            if (newPasswordInput.length < 6) {
+                showToast("Kata Laluan Lemah", "Kata laluan baharu mestilah sekurang-kurangnya 6 aksara.");
+                return;
+            }
+
+            const docId = emailInput.replace(/[@.]/g, "_");
+
+            if (!isFirebaseInitialized) {
+                // Proses pengesahan offline / tempatan
+                const localUsers = JSON.parse(localStorage.getItem('pbd_local_users') || '{}');
+                const user = localUsers[docId];
+
+                if (user && user.name === nameInput && user.code === codeInput) {
+                    user.password = newPasswordInput;
+                    localUsers[docId] = user;
+                    localStorage.setItem('pbd_local_users', JSON.stringify(localUsers));
+                    
+                    toggleResetModal();
+                    showToast("Berjaya", "Kata laluan baharu anda telah disimpan secara simulasi.");
+                } else {
+                    showToast("Gagal", "Butiran pengesahan tidak sepadan! Semak semula Nama dan Kod CM anda.");
+                }
+                return;
+            }
+
+            try {
+                // Proses pengesahan online menggunakan Firestore
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'delima_users', docId);
+                const userSnapshot = await getDoc(userDocRef);
+
+                if (userSnapshot.exists()) {
+                    const data = userSnapshot.data();
+                    
+                    // Semak jika Nama dan Kod sepadan secara tepat (case-insensitive & trimmed)
+                    if (data.name.trim().toUpperCase() === nameInput && data.code.trim().toUpperCase() === codeInput) {
+                        // Kemas kini kata laluan di Firestore
+                        await updateDoc(userDocRef, {
+                            password: newPasswordInput
+                        });
+
+                        toggleResetModal();
+                        showToast("Tukar Berjaya", "Kata laluan anda telah berjaya dikemas kini di pangkalan data.");
+                    } else {
+                        showToast("Pengesahan Gagal", "Butiran tidak sepadan! Sila pastikan Nama Penuh dan Kod CM diisi dengan betul.");
+                    }
+                } else {
+                    // Semak jika ada akaun offline yang sepadan
+                    const localUsers = JSON.parse(localStorage.getItem('pbd_local_users') || '{}');
+                    const user = localUsers[docId];
+                    if (user && user.name === nameInput && user.code === codeInput) {
+                        user.password = newPasswordInput;
+                        localUsers[docId] = user;
+                        localStorage.setItem('pbd_local_users', JSON.stringify(localUsers));
+                        
+                        toggleResetModal();
+                        showToast("Berjaya", "Kata laluan anda telah dikemas kini secara simulasi tempatan.");
+                    } else {
+                        showToast("Tidak Ditemui", "E-mel DELIMa ini belum pernah didaftarkan dalam sistem.");
+                    }
+                }
+            } catch (error) {
+                console.error("Ralat set semula kata laluan:", error);
+                showToast("Ralat Sistem", "Gagal menghubungi pelayan untuk penukaran kata laluan.");
+            }
         }
 
         // --- SISTEM POPUP / TOAST UNTUK NOTIFIKASI ---
@@ -1087,13 +1230,21 @@
         window.logout = function() {
             // Kosongkan sesi lokal
             localStorage.removeItem('pbd_session_email');
+            
+            // Padam kesemua token sesi aktif dari sessionStorage untuk membolehkan penambahan kekerapan login baharu
+            for (let i = sessionStorage.length - 1; i >= 0; i--) {
+                const key = sessionStorage.key(i);
+                if (key && key.startsWith('pbd_session_active_')) {
+                    sessionStorage.removeItem(key);
+                }
+            }
+            
             activeDelimaUser = null;
             currentEmail = "";
             switchScreen('screen-login');
             showToast("Log Keluar Berjaya", "Sesi log masuk anda telah ditamatkan.");
         }
 
-        // --- STREAMING_CHUNK: Managing settings modal... ---
         // --- INTERAKSI & PENGURUSAN TETAPAN FIREBASE CONFIG ---
         window.toggleConfigModal = function() {
             const modal = document.getElementById('modal-config');
