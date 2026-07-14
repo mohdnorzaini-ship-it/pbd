@@ -60,8 +60,30 @@
   <!-- Root elemen sebagai wadah aplikasi React -->
   <div id="root"></div>
 
-  <script type="text/babel">
-    
+  <!-- Memuat Firebase SDKs secara modular -->
+  <script type="text/babel" data-type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Inisialisasi Firebase menggunakan konfigurasi projek sebenar anda
+    const firebaseConfig = typeof __firebase_config !== 'undefined' 
+      ? JSON.parse(__firebase_config) 
+      : { 
+          apiKey: "AIzaSyBUdjM6ezrsoNcJ5WEMEUqNJIjoUu_yQYk",
+          authDomain: "dashboard-pbd-64e15.firebaseapp.com",
+          projectId: "dashboard-pbd-64e15",
+          storageBucket: "dashboard-pbd-64e15.firebasestorage.app",
+          messagingSenderId: "352363531733",
+          appId: "1:352363531733:web:8e45e274f6d882458b015c",
+          measurementId: "G-RKKGHTFGB6"
+        };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
     // ==========================================
     // Ikon-Ikon SVG Kustom untuk Antarmuka Dashboard
     // ==========================================
@@ -134,7 +156,7 @@
 
     const IconSettings = () => (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.343.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     );
@@ -161,6 +183,30 @@
       );
     };
 
+    // Lookup label mesra pengguna untuk saringan (Global scope bagi React Babel)
+    const filterMetadata = {
+      ppd: { label: 'Pejabat Pendidikan Daerah (PPD)', icon: IconSchool },
+      school: { label: 'Nama Institusi / Sekolah', icon: IconSchool },
+      schoolCode: { label: 'Kod Sekolah', icon: IconLayers },
+      schoolType: { label: 'Jenis Sekolah', icon: IconSchool },
+      level: { label: 'Tahun / Tingkatan', icon: IconLayers },
+      subject: { label: 'Mata Pelajaran (MP)', icon: IconBookOpen },
+      location: { label: 'Lokasi Kawasan', icon: IconMapPin },
+      dlp: { label: 'Status DLP', icon: IconSparkles }
+    };
+
+    // Terjemahan label "ALL" (Semua) mengikut kategori dalam Bahasa Melayu
+    const filterAllLabels = {
+      ppd: 'SEMUA PPD',
+      school: 'SEMUA INSTITUSI',
+      schoolCode: 'SEMUA KOD SEKOLAH',
+      schoolType: 'SEMUA JENIS SEKOLAH',
+      level: 'SEMUA TAHUN / TINGKATAN',
+      subject: 'SEMUA MATA PELAJARAN',
+      location: 'SEMUA LOKASI',
+      dlp: 'SEMUA STATUS DLP'
+    };
+
     // ==========================================
     // Komponen Utama Aplikasi Bersepadu
     // ==========================================
@@ -171,10 +217,17 @@
       const [inputEmail, setInputEmail] = React.useState('');
       const [loginError, setLoginError] = React.useState('');
       
-      // Integrasi Google Sheets Apps Script URL
-      const [googleScriptUrl, setGoogleScriptUrl] = React.useState('https://script.google.com/macros/s/AKfycbzL5Tz-W0H7i88HqS3zVbIqW5v5Wp9-YOUR-SCRIPT-URL/exec');
+      // Ambil sandaran awal URL daripada localStorage jika ada untuk paparan segera
+      const initialScriptUrl = localStorage.getItem('googleScriptUrl') || 'https://script.google.com/macros/s/AKfycbzL5Tz-W0H7i88HqS3zVbIqW5v5Wp9-YOUR-SCRIPT-URL/exec';
+      const [googleScriptUrl, setGoogleScriptUrl] = React.useState(initialScriptUrl);
       const [showSettingsModal, setShowSettingsModal] = React.useState(false);
-      const [tempScriptUrl, setTempScriptUrl] = React.useState('');
+      const [tempScriptUrl, setTempScriptUrl] = React.useState(initialScriptUrl);
+
+      // Sesi Debugging Logs untuk Pengguna
+      const [debugLogs, setDebugLogs] = React.useState([]);
+
+      // Firebase Authentication Tracker
+      const [firebaseUser, setFirebaseUser] = React.useState(null);
 
       // Keadaan Navigasi Utama Antara PBD dan UASA
       const [currentSystem, setCurrentSystem] = React.useState('pbd'); // 'pbd' atau 'uasa'
@@ -223,10 +276,112 @@
       const GITHUB_PBD_CSV_URL = "https://raw.githubusercontent.com/mohdnorzaini-ship-it/pbd/refs/heads/main/PBD_KESELURUHAN_2025.csv";
       const GITHUB_UASA_EXCEL_URL = "https://raw.githubusercontent.com/mohdnorzaini-ship-it/pbd/main/UASA_KESELURUHAN_2025.csv.xlsx";
 
-      // Fungsi untuk merekod aktiviti ke Google Sheet
+      // Fungsi untuk mencetak log nyahpepijat dalaman
+      const logDebug = (msg, type = "info") => {
+        const time = new Date().toLocaleTimeString();
+        setDebugLogs(prev => [{ time, msg, type }, ...prev].slice(0, 30));
+      };
+
+      // -------------------------------------------------------------
+      // 1. FIREBASE AUTHENTICATION (RULE 3 - Auth Before Queries)
+      // -------------------------------------------------------------
+      React.useEffect(() => {
+        logDebug("Memulakan pengesahan latar belakang Firebase...", "info");
+        const initAuth = async () => {
+          try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+              await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+              await signInAnonymously(auth);
+            }
+            logDebug("Sesi Firebase sedia (Log Masuk Tanpa Nama Berjaya).", "success");
+          } catch (err) {
+            logDebug("Kegagalan pengesahan Firebase: " + err.message, "error");
+            console.error("Ralat pengesahan Firebase:", err);
+          }
+        };
+        initAuth();
+        const unsubscribe = onAuthStateChanged(auth, setFirebaseUser);
+        return () => unsubscribe();
+      }, []);
+
+      // -------------------------------------------------------------
+      // 2. FIRESTORE REALTIME SYNC (RULE 1 & RULE 2 - Secure Paths & No Complex Queries)
+      // -------------------------------------------------------------
+      React.useEffect(() => {
+        if (!firebaseUser) return;
+
+        logDebug("Menghubungkan ke perkhidmatan Firestore awan...", "info");
+        // Path yang diluluskan ketat: /artifacts/{appId}/public/data/config/settings
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
+        
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const cloudData = docSnap.data();
+            if (cloudData.googleScriptUrl) {
+              setGoogleScriptUrl(cloudData.googleScriptUrl);
+              localStorage.setItem('googleScriptUrl', cloudData.googleScriptUrl);
+              logDebug("Pautan API dikemas kini dari Firestore: " + cloudData.googleScriptUrl.substring(0, 35) + "...", "success");
+            }
+          } else {
+            logDebug("Tiada dokumen tetapan ditemui di Firestore. Menggunakan sandaran tempatan.", "warning");
+          }
+        }, (err) => {
+          logDebug("Gagal mengambil tetapan Firestore: " + err.message, "error");
+          console.error("Gagal mendapatkan konfigurasi daripada Firestore:", err);
+        });
+
+        return () => unsubscribe();
+      }, [firebaseUser]);
+
+      // Fungsi untuk menyimpan perubahan URL ke Firestore & LocalStorage secara kekal
+      const handleSaveConfig = async (newUrl) => {
+        const cleanUrl = newUrl.trim();
+        if (!firebaseUser) {
+          logDebug("Firebase Auth belum sedia. Sila tunggu seketika.", "error");
+          return;
+        }
+        try {
+          localStorage.setItem('googleScriptUrl', cleanUrl);
+          setGoogleScriptUrl(cleanUrl);
+          logDebug("Menyimpan konfigurasi URL ke storan awan...", "info");
+
+          // Simpan ke Cloud Firestore untuk berkongsi tetapan dengan pengguna lain
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
+          await setDoc(docRef, { googleScriptUrl: cleanUrl }, { merge: true });
+          
+          logDebug("Kemas kini URL dikongsi berjaya disimpan ke awan Firestore.", "success");
+          setShowSettingsModal(false);
+        } catch (err) {
+          logDebug("Firestore simpan ralat: " + err.message, "error");
+          console.error("Gagal menyimpan konfigurasi ke awan Firestore:", err);
+        }
+      };
+
+      // Fungsi untuk merekod aktiviti ke Google Sheet DAN Firebase Firestore (Dwi-Simpanan)
       const sendLogToGoogleSheet = async (email, action, system) => {
+        logDebug(`Merekod log [${action}] bagi sistem [${system.toUpperCase()}]...`, "info");
+        
+        // 1. PENYIMPANAN DI FIRESTORE (Real-Time Backup)
+        if (firebaseUser) {
+          try {
+            const logsColl = collection(db, 'artifacts', appId, 'public', 'data', 'user_logs');
+            await addDoc(logsColl, {
+              email: email,
+              action: action,
+              system: system.toUpperCase(),
+              userAgent: navigator.userAgent,
+              timestamp: serverTimestamp()
+            });
+            logDebug("Log log masuk berjaya diduplikasi ke Firebase Firestore.", "success");
+          } catch (fireErr) {
+            logDebug("Backup Firestore ralat: " + fireErr.message, "warning");
+          }
+        }
+
+        // 2. PENYIMPANAN DI GOOGLE HAMPRAN (Sheets)
         if (!googleScriptUrl || googleScriptUrl.includes('YOUR-SCRIPT-URL')) {
-          console.warn("Google Apps Script URL belum dikonfigurasi sepenuhnya. Langkau perekodan Google Sheet.");
+          logDebug("Langkau Google Sheets: URL Apps Script masih kosong.", "warning");
           return;
         }
 
@@ -238,21 +393,45 @@
             userAgent: navigator.userAgent
           };
 
+          // Hantar data menggunakan mod plain/text bagi mengelakkan sekatan preflight CORS pelayar web
           await fetch(googleScriptUrl, {
             method: 'POST',
-            mode: 'no-cors', // Penting untuk melepasi sekatan CORS Apps Script
+            mode: 'no-cors', 
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'text/plain'
             },
             body: JSON.stringify(payload)
           });
-          console.log("Log berjaya dihantar ke Google Sheets.");
+          logDebug("Log berjaya dihantar ke Google Sheets API.", "success");
         } catch (err) {
-          console.error("Gagal merekod log ke Google Sheets:", err);
+          logDebug("Gagal menghantar ke Google Sheets: " + err.message, "error");
+          console.error("Gagal menghantar rekod log masuk ke Google Sheets:", err);
         }
       };
 
-      // Pengesahan ID DELIMa rasmi (mestilah berakhiran @moe-dl.edu.my)
+      // Fungsi untuk menguji ping pautan Google Sheet secara langsung
+      const handlePingTest = async () => {
+        logDebug("Menghubungi Apps Script API (PING)...", "info");
+        if (!googleScriptUrl || googleScriptUrl.includes('YOUR-SCRIPT-URL')) {
+          logDebug("Gagal: URL Apps Script belum dimasukkan.", "error");
+          return;
+        }
+
+        try {
+          // Melakukan GET request ke URL Web App Apps Script
+          const res = await fetch(googleScriptUrl);
+          const data = await res.json();
+          if (data && data.status === "active") {
+            logDebug("Ujian sambungan berjaya: API bertindak balas dengan baik!", "success");
+          } else {
+            logDebug("Respons tidak dikenali: " + JSON.stringify(data), "warning");
+          }
+        } catch (err) {
+          logDebug("Ralat ping: Pelayan bertindak balas dengan CORS atau sambungan disekat.", "error");
+        }
+      };
+
+      // Pengesahan ID DELIMa rasmi (berakhiran @moe-dl.edu.my)
       const handleLogin = (e) => {
         if (e) e.preventDefault();
         setLoginError('');
@@ -263,10 +442,9 @@
           return;
         }
 
-        // Semak format domain e-mel DELIMa
         const delimaRegex = /^[a-zA-Z0-9._%+-]+@moe-dl\.edu\.my$/i;
         if (!delimaRegex.test(emailTrimmed)) {
-          setLoginError('Format tidak sah. Akses portal ini hanya dibenarkan menggunakan ID DELIMa rasmi (@moe-dl.edu.my) sahaja.');
+          setLoginError('Akses disekat: Sila gunakan ID DELIMa rasmi (@moe-dl.edu.my) sahaja.');
           return;
         }
 
@@ -274,12 +452,11 @@
         setUserEmail(emailTrimmed);
         setIsLoggedIn(true);
 
-        // Rekodkan aktiviti log masuk ke Google Sheet secara automatik
+        // Hantar log log masuk ke Google Sheet secara real-time
         sendLogToGoogleSheet(emailTrimmed, "LOG_MASUK", currentSystem);
       };
 
       const handleLogout = () => {
-        // Rekodkan log keluar terlebih dahulu sebelum mengosongkan sesi
         sendLogToGoogleSheet(userEmail, "LOG_KELUAR", currentSystem);
         setIsLoggedIn(false);
         setUserEmail('');
@@ -937,121 +1114,199 @@
         if (isLoggedIn && userEmail) {
           sendLogToGoogleSheet(userEmail, "TUKAR_MOD_SISTEM", currentSystem);
         }
-      }, [currentSystem]);
-
-      const filterMetadata = {
-        ppd: { label: 'Pejabat Pendidikan Daerah (PPD)', icon: IconSchool },
-        school: { label: 'Nama Institusi / Sekolah', icon: IconSchool },
-        schoolCode: { label: 'Kod Sekolah', icon: IconLayers },
-        schoolType: { label: 'Jenis Sekolah', icon: IconSchool },
-        level: { label: 'Tahun / Tingkatan', icon: IconLayers },
-        subject: { label: 'Mata Pelajaran (MP)', icon: IconBookOpen },
-        location: { label: 'Lokasi Kawasan', icon: IconMapPin },
-        dlp: { label: 'Status DLP', icon: IconSparkles }
-      };
-
-      const filterAllLabels = {
-        ppd: 'SEMUA PPD',
-        school: 'SEMUA INSTITUSI',
-        schoolCode: 'SEMUA KOD SEKOLAH',
-        schoolType: 'SEMUA JENIS SEKOLAH',
-        level: 'SEMUA TAHUN / TINGKATAN',
-        subject: 'SEMUA MATA PELAJARAN',
-        location: 'SEMUA LOKASI',
-        dlp: 'SEMUA STATUS DLP'
-      };
+      }, [currentSystem, isLoggedIn, userEmail]);
 
       // ==========================================
       // RENDERING HALAMAN LOG MASUK (ID DELIMa)
       // ==========================================
       if (!isLoggedIn) {
         return (
-          <div className="min-h-screen bg-gradient-to-br from-[#4F359B] via-[#3B257B] to-[#1E1145] flex items-center justify-center p-6 relative overflow-hidden">
-            {/* Hiasan Latar Belakang Lingkaran Cahaya */}
-            <div className="absolute top-0 -left-40 w-96 h-96 bg-[#F59E0B]/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 -right-40 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl"></div>
-
-            <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white/20 p-8 space-y-8 hover-scale transition-all">
-              {/* Kepala Kad Log Masuk */}
-              <div className="text-center space-y-3">
-                <div className="w-20 h-20 rounded-3xl bg-amber-400 mx-auto flex items-center justify-center font-black text-[#4F359B] shadow-lg text-2xl tracking-wide border-2 border-white/30">
-                  JPN
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-xl font-black text-slate-950 uppercase tracking-wide">Portal Dashboard Bersepadu</h2>
-                  <p className="text-xs font-bold text-[#4F359B] uppercase tracking-widest">PBD & UASA Perak 2025</p>
-                  <p className="text-[11px] text-slate-400">Sektor Pembelajaran Jabatan Pendidikan Negeri Perak</p>
-                </div>
+          <div className="min-h-screen bg-gradient-to-br from-[#4F359B] via-[#3B257B] to-[#1E1145] flex items-stretch overflow-hidden relative">
+            
+            {/* Bahagian Kiri: Borang Log Masuk DELIMa */}
+            <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 py-12 bg-white/95 backdrop-blur-md relative z-10">
+              
+              {/* Button Konfigurasi API Penjuru Atas */}
+              <div className="absolute top-6 left-8 sm:left-16">
+                <button 
+                  onClick={() => { setTempScriptUrl(googleScriptUrl); setShowSettingsModal(true); }}
+                  className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl border border-slate-200 transition-all flex items-center gap-2 text-xs font-bold"
+                  title="Sediakan Integrasi Google Sheet"
+                >
+                  <IconSettings />
+                  <span>Konfigurasi API ({(!googleScriptUrl || googleScriptUrl.includes('YOUR-SCRIPT-URL')) ? 'Belum Set' : 'Aktif'})</span>
+                </button>
               </div>
 
-              {/* Garis Pembahagi */}
-              <div className="h-px bg-slate-100 w-full"></div>
-
-              {/* Borang Log Masuk */}
-              <form onSubmit={handleLogin} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">ID DELIMa Pengguna</label>
-                  <div className="relative">
-                    <input 
-                      type="email"
-                      value={inputEmail}
-                      onChange={(e) => setInputEmail(e.target.value)}
-                      placeholder="g-12345678@moe-dl.edu.my"
-                      className="w-full bg-slate-50 border border-slate-200 text-xs font-bold px-4 py-3.5 rounded-2xl text-slate-800 focus:ring-2 focus:ring-[#4F359B] focus:border-[#4F359B] transition-all outline-none"
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
-                      </svg>
-                    </div>
+              <div className="max-w-md w-full mx-auto space-y-8 mt-12">
+                {/* Kepala Kad Log Masuk */}
+                <div className="space-y-3">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-400 flex items-center justify-center font-black text-[#4F359B] shadow-md text-xl border border-white/20">
+                    JPN
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400">Pastikan anda menggunakan e-mel rasmi Kementerian Pendidikan Malaysia.</p>
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-black text-slate-950 uppercase tracking-wide leading-tight">Portal Dashboard Bersepadu</h2>
+                    <p className="text-xs font-bold text-[#4F359B] uppercase tracking-widest">PBD & UASA Perak 2025</p>
+                    <p className="text-[11px] text-slate-400 leading-snug">Sektor Pembelajaran Jabatan Pendidikan Negeri Perak</p>
+                  </div>
                 </div>
 
-                {/* Notifikasi Ralat Log Masuk */}
-                {loginError && (
-                  <div className="bg-rose-50 border border-rose-100 text-rose-600 p-3.5 rounded-2xl text-[11px] font-bold shadow-sm flex items-start gap-2 animate-pulse">
-                    <div className="shrink-0 mt-0.5"><IconAlertTriangle /></div>
-                    <span>{loginError}</span>
-                  </div>
-                )}
-
-                {/* Butang Log Masuk DELIMa Menggunakan Imej yang Disediakan */}
-                <div className="pt-2">
-                  <button 
-                    type="submit" 
-                    className="w-full flex items-center justify-center transition-all transform hover:scale-[1.03] active:scale-95 focus:outline-none"
-                  >
-                    <img 
-                      src="image_6dd8c5.png" 
-                      alt="Log Masuk dengan ID DELIMa" 
-                      className="w-full object-contain cursor-pointer"
-                      onError={(e) => {
-                        // Sandaran (fallback) sekiranya imej gagal dimuatkan
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                    {/* Sandaran CSS sekiranya fail imej tiada dalam direktori */}
-                    <div className="hidden w-full items-center justify-center gap-3 py-3.5 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-2xl shadow-md transition-all">
-                      <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.578-7.859-8s3.53-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.977 0-.74-.08-1.302-.177-1.868H12.24z"/>
-                      </svg>
-                      <span>Log Masuk dengan ID DELIMa</span>
-                    </div>
-                  </button>
+                {/* Status Integrasi GSheet di Halaman Login */}
+                <div className="flex items-center gap-2.5 py-3 px-4 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-bold text-slate-500 uppercase shadow-inner">
+                  <span className={`w-2.5 h-2.5 rounded-full ${(!googleScriptUrl || googleScriptUrl.includes('YOUR-SCRIPT-URL')) ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
+                  <span>ID Google Sheet: <span className="font-mono text-purple-700 block sm:inline">1TIpk0ZWWu...EqA</span></span>
                 </div>
-              </form>
 
-              {/* Garis Pembahagi */}
-              <div className="h-px bg-slate-100 w-full"></div>
+                {/* Borang Log Masuk */}
+                <form onSubmit={handleLogin} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">ID DELIMa Pengguna</label>
+                    <div className="relative">
+                      <input 
+                        type="email"
+                        value={inputEmail}
+                        onChange={(e) => setInputEmail(e.target.value)}
+                        placeholder="g-12345678@moe-dl.edu.my"
+                        className="w-full bg-slate-50 border border-slate-200 text-xs font-bold px-4 py-3.5 rounded-2xl text-slate-800 focus:ring-2 focus:ring-[#4F359B] focus:border-[#4F359B] transition-all outline-none"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400">Pastikan anda menggunakan e-mel rasmi Kementerian Pendidikan Malaysia.</p>
+                  </div>
 
-              {/* Maklumat Tambahan / Sokongan */}
-              <div className="text-center space-y-1">
-                <p className="text-[10px] text-slate-400 font-bold">Portal ini dikawal selia di bawah Standard Keselamatan ICT JPN.</p>
-                <p className="text-[9px] text-slate-300">© 2026 JPN Perak • Hak Cipta Terpelihara</p>
+                  {/* Notifikasi Ralat Log Masuk */}
+                  {loginError && (
+                    <div className="bg-rose-50 border border-rose-100 text-rose-600 p-3.5 rounded-2xl text-[11px] font-bold shadow-sm flex items-start gap-2 animate-pulse">
+                      <div className="shrink-0 mt-0.5"><IconAlertTriangle /></div>
+                      <span>{loginError}</span>
+                    </div>
+                  )}
+
+                  {/* Butang Log Masuk DELIMa Menggunakan Imej */}
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      className="w-full flex items-center justify-center transition-all transform hover:scale-[1.03] active:scale-95 focus:outline-none"
+                    >
+                      <img 
+                        src="image_6dd8c5.png" 
+                        alt="Log Masuk dengan ID DELIMa" 
+                        className="w-full object-contain cursor-pointer"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div className="hidden w-full items-center justify-center gap-3 py-3.5 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-2xl shadow-md transition-all">
+                        <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.578-7.859-8s3.53-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.977 0-.74-.08-1.302-.177-1.868H12.24z"/>
+                        </svg>
+                        <span>Log Masuk dengan ID DELIMa</span>
+                      </div>
+                    </button>
+                  </div>
+                </form>
+
+                <div className="h-px bg-slate-100 w-full"></div>
+
+                <div className="text-center space-y-1">
+                  <p className="text-[10px] text-slate-400 font-bold">Portal ini dikawal selia di bawah Standard Keselamatan ICT JPN.</p>
+                  <p className="text-[9px] text-slate-300">© 2026 JPN Perak • Hak Cipta Terpelihara</p>
+                </div>
               </div>
             </div>
+
+            {/* Bahagian Kanan: Konsol Diagnostik Masa Nyata (Sangat Berguna Untuk Tracing) */}
+            <div className="hidden lg:flex w-96 bg-[#160f38] border-l border-white/5 flex-col p-6 text-slate-300 justify-between select-none">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <h3 className="text-xs font-black text-purple-300 uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    Konsol Diagnostik Masa Nyata
+                  </h3>
+                  <button 
+                    onClick={handlePingTest}
+                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-black rounded-lg transition-all"
+                  >
+                    Uji Ping
+                  </button>
+                </div>
+                
+                {/* Paparan Log Nyahpepijat Terkini */}
+                <div className="space-y-2 max-h-[450px] overflow-y-auto no-scrollbar pr-1">
+                  {debugLogs.length === 0 ? (
+                    <p className="text-[11px] text-slate-500 italic text-center py-8">Tiada log aktiviti dikesan. Sila mulakan ujian atau log masuk.</p>
+                  ) : (
+                    debugLogs.map((log, idx) => (
+                      <div key={idx} className="bg-slate-900/50 p-3 rounded-xl border border-white/5 text-[11px] font-mono leading-relaxed space-y-1">
+                        <div className="flex justify-between items-center text-[9px]">
+                          <span className="text-slate-500">{log.time}</span>
+                          <span className={`px-1.5 py-0.5 rounded font-bold uppercase ${
+                            log.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' :
+                            log.type === 'error' ? 'bg-rose-500/10 text-rose-400' :
+                            log.type === 'warning' ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-700/20 text-slate-400'
+                          }`}>{log.type}</span>
+                        </div>
+                        <p className="break-words">{log.msg}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Panduan Ringkas */}
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2">
+                <h4 className="text-[10px] font-black text-amber-400 uppercase tracking-wider">Glosari Integrasi:</h4>
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  Log masuk berjaya direkodkan secara dwi-simpanan terus ke **Google Sheets** (menerusi Apps Script Web App) dan **Firebase Firestore** anda.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Tetapan Google Sheets Web App URL (Aktif dalam Log In & Dashboard) */}
+            {showSettingsModal && (
+              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                      <IconSettings /> Tetapan Integrasi Google Sheets (Kekal Awan)
+                    </h3>
+                    <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">×</button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Sila tampal <strong>URL Web App (Penyebaran / Deployment)</strong> daripada Google Apps Script Google Sheets anda. Konfigurasi ini akan disimpan secara kekal di Firestore and dimuatkan secara automatik untuk semua pelawat portal.
+                  </p>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">URL Web App Google Apps Script</label>
+                    <input 
+                      type="text" 
+                      value={tempScriptUrl} 
+                      onChange={(e) => setTempScriptUrl(e.target.value)}
+                      placeholder="https://script.google.com/macros/s/.../exec"
+                      className="w-full bg-slate-50 border border-slate-200 text-xs px-4 py-3 rounded-xl focus:ring-2 focus:ring-[#4F359B] outline-none"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-3">
+                    <button 
+                      onClick={() => setShowSettingsModal(false)} 
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={() => handleSaveConfig(tempScriptUrl)} 
+                      className="px-4 py-2 bg-[#4F359B] hover:bg-[#3B257B] text-white font-bold text-xs rounded-xl transition"
+                    >
+                      Simpan & Kongsi URL
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
       }
@@ -1070,7 +1325,6 @@
                 <h2 className="font-extrabold text-sm leading-tight uppercase tracking-wider">Portal Bersepadu</h2>
                 <p className="text-[10px] text-purple-200">PBD & UASA Perak 2025</p>
               </div>
-              {/* Butang Tetapan Integrasi Google Sheets */}
               <button 
                 onClick={() => { setTempScriptUrl(googleScriptUrl); setShowSettingsModal(true); }}
                 className="p-1.5 hover:bg-white/10 rounded-lg text-purple-200 hover:text-white transition-all"
@@ -1159,7 +1413,7 @@
 
             <div className="p-6 bg-[#261356] text-[10px] space-y-1 text-purple-200">
               <p className="flex items-center gap-2 font-bold text-emerald-400">● Sesi Akademik 2025</p>
-              <p>© 2026 JPN Perak • v5.0 Bersepadu</p>
+              <p>© 2026 JPN Perak • v5.1 Bersepadu</p>
             </div>
           </aside>
 
@@ -1172,12 +1426,12 @@
                 <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                      <IconSettings /> Tetapan Integrasi Google Sheets
+                      <IconSettings /> Tetapan Integrasi Google Sheets (Kekal Awan)
                     </h3>
                     <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">×</button>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Sila tampal <strong>URL Web App (Penyebaran / Deployment)</strong> yang telah dijana dari Google Apps Script Google Sheets anda untuk membolehkan portal menyimpan log masuk pengguna secara automatik.
+                    Sila tampal <strong>URL Web App (Penyebaran / Deployment)</strong> daripada Google Apps Script Google Sheets anda. Konfigurasi ini akan disimpan secara kekal di Firestore dan dimuatkan secara automatik untuk semua pelawat portal.
                   </p>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">URL Web App Google Apps Script</label>
@@ -1197,10 +1451,10 @@
                       Batal
                     </button>
                     <button 
-                      onClick={() => { setGoogleScriptUrl(tempScriptUrl); setShowSettingsModal(false); }} 
+                      onClick={() => handleSaveConfig(tempScriptUrl)} 
                       className="px-4 py-2 bg-[#4F359B] hover:bg-[#3B257B] text-white font-bold text-xs rounded-xl transition"
                     >
-                      Simpan URL
+                      Simpan & Kongsi URL
                     </button>
                   </div>
                 </div>
@@ -1305,8 +1559,8 @@
 
                     return (
                       <div key={key} className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 truncate">
-                          <IconComponent /> {meta.label}
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                          {meta.label}
                         </label>
                         <select 
                           value={value || 'ALL'} 
