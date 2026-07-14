@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Dashboard Bersepadu PBD & UASA 2025</title>
+  
+  <!-- Memuat CDN Tailwind CSS untuk Desain Premium -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Memuat CDN React & ReactDOM versi Produksi -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Memuat CDN Babel Compiler untuk memproses JSX langsung di browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Memuat CDN PapaParse untuk Analisis CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- Memuat CDN SheetJS untuk membaca file .xlsx secara dinamis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Konfigurasi Tema Kustom Tailwind CSS -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              purple: '#4F359B',
+              darkPurple: '#3B257B',
+              amber: '#F59E0B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Menyembunyikan scrollbar bawaan untuk menjaga kerapihan UI */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    /* Animasi mikro */
+    .hover-scale {
+      transition: all 0.2s ease-in-out;
+    }
+    .hover-scale:hover {
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] overflow-hidden font-sans text-slate-800">
+
+  <!-- Root elemen sebagai wadah aplikasi React -->
+  <div id="root"></div>
+
+  <script type="text/babel">
+    
+    // ==========================================
+    // Ikon-Ikon SVG Kustom untuk Antarmuka Dashboard
+    // ==========================================
+    const IconUsers = () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    );
+
+    const IconCheckCircle = () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+
+    const IconSparkles = () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    );
+
+    const IconAlertTriangle = () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    );
+
+    const IconBookOpen = () => (
+      <svg className="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    );
+
+    const IconSchool = () => (
+      <svg className="w-4 h-4 text-purple-600 font-bold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+    );
+
+    const IconMapPin = () => (
+      <svg className="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+
+    const IconLayers = () => (
+      <svg className="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    );
+
+    const IconSliders = () => (
+      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+      </svg>
+    );
+
+    const IconMousePointer = () => (
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.043 15.043L21 21M15.043 15.043L18.5 12M15.043 15.043l-3.043-3.043m0 0L3 3m9 9l3.043 3.043M12 12l3-3m-3 3L9 15" />
+      </svg>
+    );
+
+    const IconUpload = () => (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg>
+    );
+
+    const IconSettings = () => (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+
+    const SortIcon = ({ active, direction }) => {
+      if (!active) {
+        return (
+          <svg className="w-3 h-3 text-slate-300 ml-1 inline-block transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+          </svg>
+        );
+      }
+      if (direction === 'asc') {
+        return (
+          <svg className="w-3 h-3 text-slate-100 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+          </svg>
+        );
+      }
+      return (
+        <svg className="w-3 h-3 text-slate-100 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      );
+    };
+
+    // ==========================================
+    // Komponen Utama Aplikasi Bersepadu
+    // ==========================================
+    function App() {
+      // Keadaan Log Masuk
+      const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+      const [userEmail, setUserEmail] = React.useState('');
+      const [inputEmail, setInputEmail] = React.useState('');
+      const [loginError, setLoginError] = React.useState('');
+      
+      // Integrasi Google Sheets Apps Script URL
+      const [googleScriptUrl, setGoogleScriptUrl] = React.useState('https://script.google.com/macros/s/AKfycbzL5Tz-W0H7i88HqS3zVbIqW5v5Wp9-YOUR-SCRIPT-URL/exec');
+      const [showSettingsModal, setShowSettingsModal] = React.useState(false);
+      const [tempScriptUrl, setTempScriptUrl] = React.useState('');
+
+      // Keadaan Navigasi Utama Antara PBD dan UASA
+      const [currentSystem, setCurrentSystem] = React.useState('pbd'); // 'pbd' atau 'uasa'
+      
+      // Tab aktif untuk setiap sistem
+      const [pbdTab, setPbdTab] = React.useState('ringkasan'); // 'ringkasan' atau 'subjek'
+      const [uasaTab, setUasaTab] = React.useState('ringkasan'); // 'ringkasan' atau 'subjek'
+
+      // Keadaan Loading dan Error
+      const [isLoadingPBD, setIsLoadingPBD] = React.useState(true);
+      const [isLoadingUASA, setIsLoadingUASA] = React.useState(true);
+      const [pbdError, setPbdError] = React.useState(null);
+      const [uasaError, setUasaError] = React.useState(null);
+
+      // Data mentah terpisah untuk PBD dan UASA
+      const [rawPBDRows, setRawPBDRows] = React.useState([]);
+      const [rawUASARows, setRawUASARows] = React.useState([]);
+
+      // Opsi Kategori untuk Saringan PBD & UASA
+      const [pbdOptions, setPbdOptions] = React.useState({ ppd: [], school: [], schoolCode: [], schoolType: [], level: [], subject: [], location: [], dlp: [] });
+      const [uasaOptions, setUasaOptions] = React.useState({ ppd: [], school: [], schoolCode: [], schoolType: [], level: [], subject: [], location: [], dlp: [] });
+
+      // Keadaan Penapis Terpisah bagi Mengelakkan Percampuran Data
+      const [pbdFilters, setPbdFilters] = React.useState({ ppd: 'ALL', school: 'ALL', schoolCode: 'ALL', schoolType: 'ALL', level: 'ALL', subject: 'ALL', location: 'ALL', dlp: 'ALL' });
+      const [uasaFilters, setUasaFilters] = React.useState({ ppd: 'ALL', school: 'ALL', schoolCode: 'ALL', schoolType: 'ALL', level: 'ALL', subject: 'ALL', location: 'ALL', dlp: 'ALL' });
+
+      // Konfigurasi Pengisihan Jadual
+      const [pbdSortConfig, setPbdSortConfig] = React.useState({ key: 'school', direction: 'asc' });
+      const [uasaSortConfig, setUasaSortConfig] = React.useState({ key: 'school', direction: 'asc' });
+
+      // Interaktiviti Grafik (Klik Bar)
+      const [clickedPbdBar, setClickedPbdBar] = React.useState(null);
+      const [clickedPbdGroupedBar, setClickedPbdGroupedBar] = React.useState(null);
+      const [clickedUasaBar, setClickedUasaBar] = React.useState(null);
+      const [clickedUasaGroupedBar, setClickedUasaGroupedBar] = React.useState(null);
+
+      // Subjek Analis Dinamik
+      const [selectedPbdAnalysisSubject, setSelectedPbdAnalysisSubject] = React.useState('');
+      const [selectedUasaAnalysisSubject, setSelectedUasaAnalysisSubject] = React.useState('');
+
+      // Metrik Tab Subjek Terpilih
+      const [activePbdSubjectMetric, setActivePbdSubjectMetric] = React.useState('passRate'); // 'passRate', 'critRate', 'excelRate'
+      const [activeUasaSubjectMetric, setActiveUasaSubjectMetric] = React.useState('baikRate'); // 'baikRate', 'nearMissRate', 'intervensiRate'
+
+      // GitHub URLs
+      const GITHUB_PBD_CSV_URL = "https://raw.githubusercontent.com/mohdnorzaini-ship-it/pbd/refs/heads/main/PBD_KESELURUHAN_2025.csv";
+      const GITHUB_UASA_EXCEL_URL = "https://raw.githubusercontent.com/mohdnorzaini-ship-it/pbd/main/UASA_KESELURUHAN_2025.csv.xlsx";
+
+      // Fungsi untuk merekod aktiviti ke Google Sheet
+      const sendLogToGoogleSheet = async (email, action, system) => {
+        if (!googleScriptUrl || googleScriptUrl.includes('YOUR-SCRIPT-URL')) {
+          console.warn("Google Apps Script URL belum dikonfigurasi sepenuhnya. Langkau perekodan Google Sheet.");
+          return;
+        }
+
+        try {
+          const payload = {
+            email: email,
+            action: action,
+            system: system.toUpperCase(),
+            userAgent: navigator.userAgent
+          };
+
+          await fetch(googleScriptUrl, {
+            method: 'POST',
+            mode: 'no-cors', // Penting untuk melepasi sekatan CORS Apps Script
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+          console.log("Log berjaya dihantar ke Google Sheets.");
+        } catch (err) {
+          console.error("Gagal merekod log ke Google Sheets:", err);
+        }
+      };
+
+      // Pengesahan ID DELIMa rasmi (mestilah berakhiran @moe-dl.edu.my)
+      const handleLogin = (e) => {
+        if (e) e.preventDefault();
+        setLoginError('');
+
+        const emailTrimmed = inputEmail.trim();
+        if (!emailTrimmed) {
+          setLoginError('Sila masukkan ID DELIMa anda.');
+          return;
+        }
+
+        // Semak format domain e-mel DELIMa
+        const delimaRegex = /^[a-zA-Z0-9._%+-]+@moe-dl\.edu\.my$/i;
+        if (!delimaRegex.test(emailTrimmed)) {
+          setLoginError('Format tidak sah. Akses portal ini hanya dibenarkan menggunakan ID DELIMa rasmi (@moe-dl.edu.my) sahaja.');
+          return;
+        }
+
+        // Kejayaan Log Masuk
+        setUserEmail(emailTrimmed);
+        setIsLoggedIn(true);
+
+        // Rekodkan aktiviti log masuk ke Google Sheet secara automatik
+        sendLogToGoogleSheet(emailTrimmed, "LOG_MASUK", currentSystem);
+      };
+
+      const handleLogout = () => {
+        // Rekodkan log keluar terlebih dahulu sebelum mengosongkan sesi
+        sendLogToGoogleSheet(userEmail, "LOG_KELUAR", currentSystem);
+        setIsLoggedIn(false);
+        setUserEmail('');
+        setInputEmail('');
+        setLoginError('');
+      };
+
+      // Ambil data PBD dari GitHub secara automatik
+      const fetchPBDData = React.useCallback(() => {
+        setIsLoadingPBD(true);
+        setPbdError(null);
+
+        fetch(GITHUB_PBD_CSV_URL)
+          .then(response => {
+            if (!response.ok) throw new Error("Gagal memuat fail PBD dari GitHub.");
+            return response.text();
+          })
+          .then(csvText => {
+            const cleanedText = csvText.replace(/\r/g, "");
+            Papa.parse(cleanedText, {
+              header: true,
+              skipEmptyLines: true,
+              complete: function(results) {
+                if (results.data.length === 0) throw new Error("Fail PBD kosong.");
+                processPBD(results.data);
+                setIsLoadingPBD(false);
+              },
+              error: function(err) {
+                setPbdError("Ralat parsing PBD: " + err.message);
+                setIsLoadingPBD(false);
+              }
+            });
+          })
+          .catch(err => {
+            setPbdError(`Ralat automatik PBD: ${err.message}. Sila muat naik manual fail PBD.`);
+            setIsLoadingPBD(false);
+          });
+      }, []);
+
+      // Ambil data UASA dari GitHub secara automatik
+      const fetchUASAData = React.useCallback(() => {
+        setIsLoadingUASA(true);
+        setUasaError(null);
+
+        fetch(GITHUB_UASA_EXCEL_URL)
+          .then(response => {
+            if (!response.ok) throw new Error("Gagal memuat fail UASA dari GitHub.");
+            return response.arrayBuffer();
+          })
+          .then(arrayBuffer => {
+            const data = new Uint8Array(arrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            
+            if (jsonData.length === 0) throw new Error("Fail UASA kosong.");
+            processUASA(jsonData);
+            setIsLoadingUASA(false);
+          })
+          .catch(err => {
+            setUasaError(`Ralat automatik UASA: ${err.message}. Sila muat naik manual fail UASA.`);
+            setIsLoadingUASA(false);
+          });
+      }, []);
+
+      // Muatkan kedua-dua fail semasa permulaan portal
+      React.useEffect(() => {
+        fetchPBDData();
+        fetchUASAData();
+      }, [fetchPBDData, fetchUASAData]);
+
+      // Pemprosesan manual PBD (.csv)
+      const handleManualPBDUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setIsLoadingPBD(true);
+        setPbdError(null);
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const text = evt.target.result;
+          Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+              try {
+                if (results.data.length === 0) throw new Error("Fail kosong.");
+                processPBD(results.data);
+                setIsLoadingPBD(false);
+              } catch (err) {
+                setPbdError("Ralat manual PBD: " + err.message);
+                setIsLoadingPBD(false);
+              }
+            }
+          });
+        };
+        reader.readAsText(file);
+      };
+
+      // Pemprosesan manual UASA (.xlsx)
+      const handleManualUASAUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setIsLoadingUASA(true);
+        setUasaError(null);
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            
+            if (jsonData.length === 0) throw new Error("Fail kosong.");
+            processUASA(jsonData);
+            setIsLoadingUASA(false);
+          } catch (err) {
+            setUasaError("Ralat manual UASA: " + err.message);
+            setIsLoadingUASA(false);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      };
+
+      const processPBD = (data) => {
+        const headers = Object.keys(data[0] || {});
+        if (headers.length === 0) return;
+
+        const filterKeys = {
+          ppd: headers.find(h => h.toUpperCase() === 'KET_PPD') || 'KET_PPD',
+          school: headers.find(h => h.toUpperCase() === 'NAMA_PENUH_INSTITUSI') || 'NAMA_PENUH_INSTITUSI',
+          schoolCode: headers.find(h => h.toUpperCase() === 'KOD_INSTITUSI') || 'KOD_INSTITUSI',
+          schoolType: headers.find(h => h.toUpperCase() === 'JNS_INSTITUSI') || 'JNS_INSTITUSI',
+          level: headers.find(h => h.toUpperCase() === 'THN_TING') || 'THN_TING',
+          subject: headers.find(h => h.toUpperCase() === 'MP') || 'MP',
+          location: headers.find(h => h.toUpperCase() === 'KET_LOKASI') || 'KET_LOKASI',
+          dlp: headers.find(h => h.toUpperCase() === 'KET_DLP') || 'KET_DLP'
+        };
+
+        const filterOptions = { ppd: new Set(), school: new Set(), schoolCode: new Set(), schoolType: new Set(), level: new Set(), subject: new Set(), location: new Set(), dlp: new Set() };
+
+        const tpColsMap = {
+          tp1: headers.find(h => h.toUpperCase() === 'TP1' || h.toUpperCase() === 'TP_1' || h.toUpperCase() === 'BIL_TP1') || 'TP1',
+          tp2: headers.find(h => h.toUpperCase() === 'TP2' || h.toUpperCase() === 'TP_2' || h.toUpperCase() === 'BIL_TP2') || 'TP2',
+          tp3: headers.find(h => h.toUpperCase() === 'TP3' || h.toUpperCase() === 'TP_3' || h.toUpperCase() === 'BIL_TP3') || 'TP3',
+          tp4: headers.find(h => h.toUpperCase() === 'TP4' || h.toUpperCase() === 'TP_4' || h.toUpperCase() === 'BIL_TP4') || 'TP4',
+          tp5: headers.find(h => h.toUpperCase() === 'TP5' || h.toUpperCase() === 'TP_5' || h.toUpperCase() === 'BIL_TP5') || 'TP5',
+          tp6: headers.find(h => h.toUpperCase() === 'TP6' || h.toUpperCase() === 'TP_6' || h.toUpperCase() === 'BIL_TP6') || 'TP6',
+          td: headers.find(h => h.toUpperCase() === 'TD' || h.toUpperCase() === 'BIL_TD' || h.toUpperCase() === 'SUM_OF_TD') || 'TD'
+        };
+
+        const cleanedRows = [];
+
+        data.forEach(row => {
+          const checkVal = row[filterKeys.schoolCode] || '';
+          if (!checkVal) return;
+
+          Object.keys(filterKeys).forEach(key => {
+            const val = row[filterKeys[key]]?.toString().trim();
+            if (val) filterOptions[key].add(val);
+          });
+
+          const tp1 = parseInt(row[tpColsMap.tp1]?.toString().replace(/\D/g, '')) || 0;
+          const tp2 = parseInt(row[tpColsMap.tp2]?.toString().replace(/\D/g, '')) || 0;
+          const tp3 = parseInt(row[tpColsMap.tp3]?.toString().replace(/\D/g, '')) || 0;
+          const tp4 = parseInt(row[tpColsMap.tp4]?.toString().replace(/\D/g, '')) || 0;
+          const tp5 = parseInt(row[tpColsMap.tp5]?.toString().replace(/\D/g, '')) || 0;
+          const tp6 = parseInt(row[tpColsMap.tp6]?.toString().replace(/\D/g, '')) || 0;
+          const td = parseInt(row[tpColsMap.td]?.toString().replace(/\D/g, '')) || 0;
+
+          const totalRowStudents = tp1 + tp2 + tp3 + tp4 + tp5 + tp6 + td;
+          const totalTPScore = (tp1 * 1) + (tp2 * 2) + (tp3 * 3) + (tp4 * 4) + (tp5 * 5) + (tp6 * 6);
+          const totalAssessed = tp1 + tp2 + tp3 + tp4 + tp5 + tp6;
+          const avgTP = totalAssessed > 0 ? parseFloat((totalTPScore / totalAssessed).toFixed(2)) : 0;
+
+          cleanedRows.push({
+            categories: {
+              ppd: row[filterKeys.ppd]?.toString().trim() || 'N/A',
+              school: row[filterKeys.school]?.toString().trim() || 'N/A',
+              schoolCode: row[filterKeys.schoolCode]?.toString().trim() || 'N/A',
+              schoolType: row[filterKeys.schoolType]?.toString().trim() || 'N/A',
+              level: row[filterKeys.level]?.toString().trim() || 'N/A',
+              subject: row[filterKeys.subject]?.toString().trim() || 'N/A',
+              location: row[filterKeys.location]?.toString().trim() || 'N/A',
+              dlp: row[filterKeys.dlp]?.toString().trim() || 'N/A',
+            },
+            counts: { tp1, tp2, tp3, tp4, tp5, tp6, td, totalRowStudents, totalAssessed },
+            avgTP
+          });
+        });
+
+        setRawPBDRows(cleanedRows);
+
+        const sortedOptions = {};
+        Object.keys(filterOptions).forEach(key => {
+          sortedOptions[key] = Array.from(filterOptions[key]).sort();
+        });
+        setPbdOptions(sortedOptions);
+
+        const subjectList = Array.from(filterOptions.subject).sort();
+        if (subjectList.length > 0) setSelectedPbdAnalysisSubject(subjectList[0]);
+
+        const initialFilters = {};
+        Object.keys(filterKeys).forEach(key => { initialFilters[key] = 'ALL'; });
+        setPbdFilters(initialFilters);
+      };
+
+      const processUASA = (data) => {
+        const headers = Object.keys(data[0] || {});
+        if (headers.length === 0) return;
+
+        const getHeaderKey = (possibleNames) => {
+          return headers.find(h => possibleNames.includes(h.toUpperCase())) || possibleNames[0];
+        };
+
+        const filterKeys = {
+          ppd: getHeaderKey(['KET_PPD', 'PPD', 'PEJABAT PENDIDIKAN DAERAH', 'NAMA_PPD', 'NAMA PPD']),
+          school: getHeaderKey(['NAMA_PENUH_INSTITUSI', 'NAMA_INSTITUSI', 'SEKOLAH', 'NAMA SEKOLAH', 'INSTITUSI']),
+          schoolCode: getHeaderKey(['KOD_INSTITUSI', 'KOD_SEKOLAH', 'KOD SEKOLAH', 'KOD_INST']),
+          schoolType: getHeaderKey(['JNS_INSTITITUSI', 'JNS_INSTITUSI', 'JENIS_INSTITUSI', 'JENIS SEKOLAH', 'JNS_SEKOLAH']),
+          level: getHeaderKey(['THN_TING', 'TINGKATAN', 'TAHUN', 'TAHUN_TINGKATAN']),
+          subject: getHeaderKey(['MP', 'MATA_PELAJARAN', 'MATAPELAJARAN', 'MATA PELAJARAN']),
+          location: getHeaderKey(['KET_LOKASI', 'LOKASI', 'KAWASAN']),
+          dlp: getHeaderKey(['KET_DLP', 'DLP', 'STATUS_DLP', 'STATUS_DLP_SEKOLAH'])
+        };
+
+        const filterOptions = { ppd: new Set(), school: new Set(), schoolCode: new Set(), schoolType: new Set(), level: new Set(), subject: new Set(), location: new Set(), dlp: new Set() };
+
+        const gradeKeys = {
+          a: getHeaderKey(['A', 'BIL_A', 'BIL A', 'TP1', 'TP_1']),
+          b: getHeaderKey(['B', 'BIL_B', 'BIL B', 'TP2', 'TP_2']),
+          c: getHeaderKey(['C', 'BIL_C', 'BIL C', 'TP3', 'TP_3']),
+          d: getHeaderKey(['D', 'BIL_D', 'BIL D', 'TP4', 'TP_4']),
+          e: getHeaderKey(['E', 'BIL_E', 'BIL E', 'TP5', 'TP_5']),
+          f: getHeaderKey(['F', 'BIL_F', 'BIL F', 'TP6', 'TP_6']),
+          th: getHeaderKey(['TH', 'BIL_TH', 'BIL TH', 'TD', 'BIL_TD', 'SUM_OF_TD', 'TIDAK HADIR', 'TIDAK_HADIR'])
+        };
+
+        const cleanedRows = [];
+
+        data.forEach(row => {
+          const checkCode = row[filterKeys.schoolCode] || row[filterKeys.school] || '';
+          if (!checkCode) return;
+
+          Object.keys(filterKeys).forEach(key => {
+            const val = row[filterKeys[key]]?.toString().trim();
+            if (val) filterOptions[key].add(val);
+          });
+
+          const valA = parseInt(row[gradeKeys.a]?.toString().replace(/\D/g, '')) || 0;
+          const valB = parseInt(row[gradeKeys.b]?.toString().replace(/\D/g, '')) || 0;
+          const valC = parseInt(row[gradeKeys.c]?.toString().replace(/\D/g, '')) || 0;
+          const valD = parseInt(row[gradeKeys.d]?.toString().replace(/\D/g, '')) || 0;
+          const valE = parseInt(row[gradeKeys.e]?.toString().replace(/\D/g, '')) || 0;
+          const valF = parseInt(row[gradeKeys.f]?.toString().replace(/\D/g, '')) || 0;
+          const valTH = parseInt(row[gradeKeys.th]?.toString().replace(/\D/g, '')) || 0;
+
+          const totalRowStudents = valA + valB + valC + valD + valE + valF + valTH;
+          const totalAssessed = valA + valB + valC + valD + valE + valF;
+
+          cleanedRows.push({
+            categories: {
+              ppd: row[filterKeys.ppd]?.toString().trim() || 'N/A',
+              school: row[filterKeys.school]?.toString().trim() || 'N/A',
+              schoolCode: row[filterKeys.schoolCode]?.toString().trim() || 'N/A',
+              schoolType: row[filterKeys.schoolType]?.toString().trim() || 'N/A',
+              level: row[filterKeys.level]?.toString().trim() || 'N/A',
+              subject: row[filterKeys.subject]?.toString().trim() || 'N/A',
+              location: row[filterKeys.location]?.toString().trim() || 'N/A',
+              dlp: row[filterKeys.dlp]?.toString().trim() || 'N/A',
+            },
+            counts: { a: valA, b: valB, c: valC, d: valD, e: valE, f: valF, th: valTH, totalRowStudents, totalAssessed }
+          });
+        });
+
+        setRawUASARows(cleanedRows);
+
+        const sortedOptions = {};
+        Object.keys(filterOptions).forEach(key => {
+          sortedOptions[key] = Array.from(filterOptions[key]).sort();
+        });
+        setUasaOptions(sortedOptions);
+
+        const subjectList = Array.from(filterOptions.subject).sort();
+        if (subjectList.length > 0) setSelectedUasaAnalysisSubject(subjectList[0]);
+
+        const initialFilters = {};
+        Object.keys(filterKeys).forEach(key => { initialFilters[key] = 'ALL'; });
+        setUasaFilters(initialFilters);
+      };
+
+      // PBD Dynamic Options
+      const pbdDynamicOptions = React.useMemo(() => {
+        const keys = ['ppd', 'school', 'schoolCode', 'schoolType', 'level', 'subject', 'location', 'dlp'];
+        const options = {};
+        keys.forEach(key => {
+          const matchingRows = rawPBDRows.filter(row => {
+            for (const otherKey of keys) {
+              if (otherKey === key) continue;
+              const activeVal = pbdFilters[otherKey];
+              if (activeVal && activeVal !== 'ALL' && row.categories[otherKey] !== activeVal) return false;
+            }
+            return true;
+          });
+          const uniqueVals = new Set();
+          matchingRows.forEach(row => { if (row.categories[key]) uniqueVals.add(row.categories[key]); });
+          options[key] = Array.from(uniqueVals).sort();
+        });
+        return options;
+      }, [rawPBDRows, pbdFilters]);
+
+      // UASA Dynamic Options
+      const uasaDynamicOptions = React.useMemo(() => {
+        const keys = ['ppd', 'school', 'schoolCode', 'schoolType', 'level', 'subject', 'location', 'dlp'];
+        const options = {};
+        keys.forEach(key => {
+          const matchingRows = rawUASARows.filter(row => {
+            for (const otherKey of keys) {
+              if (otherKey === key) continue;
+              const activeVal = uasaFilters[otherKey];
+              if (activeVal && activeVal !== 'ALL' && row.categories[otherKey] !== activeVal) return false;
+            }
+            return true;
+          });
+          const uniqueVals = new Set();
+          matchingRows.forEach(row => { if (row.categories[key]) uniqueVals.add(row.categories[key]); });
+          options[key] = Array.from(uniqueVals).sort();
+        });
+        return options;
+      }, [rawUASARows, uasaFilters]);
+
+      // Pengesahan keselarasan filter PBD
+      React.useEffect(() => {
+        if (rawPBDRows.length === 0) return;
+        let filtersChanged = false;
+        const updatedFilters = { ...pbdFilters };
+        Object.keys(pbdFilters).forEach(key => {
+          const val = pbdFilters[key];
+          if (val && val !== 'ALL') {
+            const validOptions = pbdDynamicOptions[key] || [];
+            if (!validOptions.includes(val)) {
+              updatedFilters[key] = 'ALL';
+              filtersChanged = true;
+            }
+          }
+        });
+        if (filtersChanged) setPbdFilters(updatedFilters);
+      }, [pbdFilters, pbdDynamicOptions, rawPBDRows]);
+
+      // Pengesahan keselarasan filter UASA
+      React.useEffect(() => {
+        if (rawUASARows.length === 0) return;
+        let filtersChanged = false;
+        const updatedFilters = { ...uasaFilters };
+        Object.keys(uasaFilters).forEach(key => {
+          const val = uasaFilters[key];
+          if (val && val !== 'ALL') {
+            const validOptions = uasaDynamicOptions[key] || [];
+            if (!validOptions.includes(val)) {
+              updatedFilters[key] = 'ALL';
+              filtersChanged = true;
+            }
+          }
+        });
+        if (filtersChanged) setUasaFilters(updatedFilters);
+      }, [uasaFilters, uasaDynamicOptions, rawUASARows]);
+
+      // Filtered Rows PBD
+      const filteredPBDRows = React.useMemo(() => {
+        return rawPBDRows.filter(row => {
+          const keys = ['ppd', 'school', 'schoolCode', 'schoolType', 'level', 'subject', 'location', 'dlp'];
+          for (const key of keys) {
+            if (pbdFilters[key] && pbdFilters[key] !== 'ALL' && row.categories[key] !== pbdFilters[key]) return false;
+          }
+          return true;
+        });
+      }, [rawPBDRows, pbdFilters]);
+
+      // Filtered Rows UASA
+      const filteredUASARows = React.useMemo(() => {
+        return rawUASARows.filter(row => {
+          const keys = ['ppd', 'school', 'schoolCode', 'schoolType', 'level', 'subject', 'location', 'dlp'];
+          for (const key of keys) {
+            if (uasaFilters[key] && uasaFilters[key] !== 'ALL' && row.categories[key] !== uasaFilters[key]) return false;
+          }
+          return true;
+        });
+      }, [rawUASARows, uasaFilters]);
+
+      // Sorted & Filtered PBD
+      const sortedAndFilteredPBDRows = React.useMemo(() => {
+        const rows = [...filteredPBDRows];
+        if (!pbdSortConfig.key || !pbdSortConfig.direction) return rows;
+        rows.sort((a, b) => {
+          let valA, valB;
+          if (['school', 'ppd', 'level', 'subject'].includes(pbdSortConfig.key)) {
+            valA = a.categories[pbdSortConfig.key] || '';
+            valB = b.categories[pbdSortConfig.key] || '';
+            return pbdSortConfig.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+          }
+          if (pbdSortConfig.key === 'tp12') { valA = a.counts.tp1 + a.counts.tp2; valB = b.counts.tp1 + b.counts.tp2; }
+          else if (pbdSortConfig.key === 'tp34') { valA = a.counts.tp3 + a.counts.tp4; valB = b.counts.tp3 + b.counts.tp4; }
+          else if (pbdSortConfig.key === 'tp56') { valA = a.counts.tp5 + a.counts.tp6; valB = b.counts.tp5 + b.counts.tp6; }
+          else if (pbdSortConfig.key === 'td') { valA = a.counts.td; valB = b.counts.td; }
+          if (valA < valB) return pbdSortConfig.direction === 'asc' ? -1 : 1;
+          if (valA > valB) return pbdSortConfig.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+        return rows;
+      }, [filteredPBDRows, pbdSortConfig]);
+
+      // Sorted & Filtered UASA
+      const sortedAndFilteredUASARows = React.useMemo(() => {
+        const rows = [...filteredUASARows];
+        if (!uasaSortConfig.key || !uasaSortConfig.direction) return rows;
+        rows.sort((a, b) => {
+          let valA, valB;
+          if (['school', 'ppd', 'level', 'subject'].includes(uasaSortConfig.key)) {
+            valA = a.categories[uasaSortConfig.key] || '';
+            valB = b.categories[uasaSortConfig.key] || '';
+            return uasaSortConfig.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+          }
+          if (uasaSortConfig.key === 'baik') { valA = a.counts.a + a.counts.b + a.counts.c; valB = b.counts.a + b.counts.b + b.counts.c; }
+          else if (uasaSortConfig.key === 'nearMiss') { valA = a.counts.d + a.counts.e; valB = b.counts.d + b.counts.e; }
+          else if (uasaSortConfig.key === 'intervensi') { valA = a.counts.f; valB = b.counts.f; }
+          else if (uasaSortConfig.key === 'th') { valA = a.counts.th; valB = b.counts.th; }
+          if (valA < valB) return uasaSortConfig.direction === 'asc' ? -1 : 1;
+          if (valA > valB) return uasaSortConfig.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+        return rows;
+      }, [filteredUASARows, uasaSortConfig]);
+
+      // PBD Metrics
+      const pbdMetrics = React.useMemo(() => {
+        if (filteredPBDRows.length === 0) {
+          return { total: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, td: 0, p1: "0.0", p2: "0.0", p3: "0.0", p4: "0.0", p5: "0.0", p6: "0.0", ptd: "0.0", passRate: "0.0", excelRate: "0.0", critRate: "0.0", assessedRate: "0.0", assessedCount: 0, majorityTp: "N/A", majorityPercent: "0.0" };
+        }
+        let tp1 = 0, tp2 = 0, tp3 = 0, tp4 = 0, tp5 = 0, tp6 = 0, td = 0, total = 0, assessed = 0;
+        filteredPBDRows.forEach(row => {
+          tp1 += row.counts.tp1; tp2 += row.counts.tp2; tp3 += row.counts.tp3; tp4 += row.counts.tp4; tp5 += row.counts.tp5; tp6 += row.counts.tp6; td += row.counts.td;
+          total += row.counts.totalRowStudents; assessed += row.counts.totalAssessed;
+        });
+        const sumAll = total || 1;
+        const passRate = sumAll > 0 ? (((tp3 + tp4 + tp5 + tp6) / sumAll) * 100).toFixed(1) : "0.0";
+        const critRate = sumAll > 0 ? (((tp1 + tp2) / sumAll) * 100).toFixed(1) : "0.0";
+        const excelRate = sumAll > 0 ? (((tp5 + tp6) / sumAll) * 100).toFixed(1) : "0.0";
+        const assessedRate = sumAll > 0 ? ((assessed / sumAll) * 100).toFixed(1) : "0.0";
+
+        const p1 = ((tp1 / sumAll) * 100).toFixed(1);
+        const p2 = ((tp2 / sumAll) * 100).toFixed(1);
+        const p3 = ((tp3 / sumAll) * 100).toFixed(1);
+        const p4 = ((tp4 / sumAll) * 100).toFixed(1);
+        const p5 = ((tp5 / sumAll) * 100).toFixed(1);
+        const p6 = ((tp6 / sumAll) * 100).toFixed(1);
+        const ptd = ((td / sumAll) * 100).toFixed(1);
+
+        const arrPercents = [parseFloat(p1), parseFloat(p2), parseFloat(p3), parseFloat(p4), parseFloat(p5), parseFloat(p6), parseFloat(ptd)];
+        const maxPercent = Math.max(...arrPercents);
+        const labels = ['TP 1', 'TP 2', 'TP 3', 'TP 4', 'TP 5', 'TP 6', 'TD'];
+        const majorityTp = labels[arrPercents.indexOf(maxPercent)];
+
+        return { total, tp1, tp2, tp3, tp4, tp5, tp6, td, p1, p2, p3, p4, p5, p6, ptd, passRate, excelRate, critRate, assessedRate, assessedCount: assessed, majorityTp, majorityPercent: maxPercent.toFixed(1) };
+      }, [filteredPBDRows]);
+
+      // UASA Metrics
+      const uasaMetrics = React.useMemo(() => {
+        if (filteredUASARows.length === 0) {
+          return { total: 0, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0, th: 0, pA: "0.0", pB: "0.0", pC: "0.0", pD: "0.0", pE: "0.0", pF: "0.0", pTH: "0.0", baikRate: "0.0", nearMissRate: "0.0", intervensiRate: "0.0", assessedRate: "0.0", assessedCount: 0, majorityGrade: "N/A", majorityPercent: "0.0" };
+        }
+        let a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, th = 0, total = 0, assessed = 0;
+        filteredUASARows.forEach(row => {
+          a += row.counts.a; b += row.counts.b; c += row.counts.c; d += row.counts.d; e += row.counts.e; f += row.counts.f; th += row.counts.th;
+          total += row.counts.totalRowStudents; assessed += row.counts.totalAssessed;
+        });
+        const sumAll = total || 1;
+        const baikRate = sumAll > 0 ? (((a + b + c) / sumAll) * 100).toFixed(1) : "0.0";
+        const nearMissRate = sumAll > 0 ? (((d + e) / sumAll) * 100).toFixed(1) : "0.0";
+        const intervensiRate = sumAll > 0 ? ((f / sumAll) * 100).toFixed(1) : "0.0";
+        const assessedRate = sumAll > 0 ? ((assessed / sumAll) * 100).toFixed(1) : "0.0";
+
+        const pA = ((a / sumAll) * 100).toFixed(1);
+        const pB = ((b / sumAll) * 100).toFixed(1);
+        const pC = ((c / sumAll) * 100).toFixed(1);
+        const pD = ((d / sumAll) * 100).toFixed(1);
+        const pE = ((e / sumAll) * 100).toFixed(1);
+        const pF = ((f / sumAll) * 100).toFixed(1);
+        const pTH = ((th / sumAll) * 100).toFixed(1);
+
+        const arrPercents = [parseFloat(pA), parseFloat(pB), parseFloat(pC), parseFloat(pD), parseFloat(pE), parseFloat(pF), parseFloat(pTH)];
+        const maxPercent = Math.max(...arrPercents);
+        const labels = ['Gred A', 'Gred B', 'Gred C', 'Gred D', 'Gred E', 'Gred F', 'Tidak Hadir (TH)'];
+        const majorityGrade = labels[arrPercents.indexOf(maxPercent)];
+
+        return { total, a, b, c, d, e, f, th, pA, pB, pC, pD, pE, pF, pTH, baikRate, nearMissRate, intervensiRate, assessedRate, assessedCount: assessed, majorityGrade, majorityPercent: maxPercent.toFixed(1) };
+      }, [filteredUASARows]);
+
+      // PBD Bars
+      const pbdBars = [
+        { label: 'TP 1', percent: pbdMetrics.p1, count: pbdMetrics.tp1, color: 'bg-rose-200 hover:bg-rose-300', textColor: 'text-rose-500' },
+        { label: 'TP 2', percent: pbdMetrics.p2, count: pbdMetrics.tp2, color: 'bg-amber-200 hover:bg-amber-300', textColor: 'text-amber-500' },
+        { label: 'TP 3', percent: pbdMetrics.p3, count: pbdMetrics.tp3, color: 'bg-emerald-300 hover:bg-emerald-400', textColor: 'text-emerald-500' },
+        { label: 'TP 4', percent: pbdMetrics.p4, count: pbdMetrics.tp4, color: 'bg-blue-400 hover:bg-blue-500', textColor: 'text-blue-500' },
+        { label: 'TP 5', percent: pbdMetrics.p5, count: pbdMetrics.tp5, color: 'bg-purple-400 hover:bg-purple-500', textColor: 'text-purple-500' },
+        { label: 'TP 6', percent: pbdMetrics.p6, count: pbdMetrics.tp6, color: 'bg-amber-400 hover:bg-amber-500', textColor: 'text-amber-600' },
+        { label: 'TD', percent: pbdMetrics.ptd, count: pbdMetrics.td, color: 'bg-slate-300 hover:bg-slate-400', textColor: 'text-slate-500' },
+      ];
+
+      // UASA Bars
+      const uasaBars = [
+        { label: 'Gred A', percent: uasaMetrics.pA, count: uasaMetrics.a, color: 'bg-emerald-400 hover:bg-emerald-500', textColor: 'text-emerald-600' },
+        { label: 'Gred B', percent: uasaMetrics.pB, count: uasaMetrics.b, color: 'bg-emerald-300 hover:bg-emerald-400', textColor: 'text-emerald-500' },
+        { label: 'Gred C', percent: uasaMetrics.pC, count: uasaMetrics.c, color: 'bg-emerald-200 hover:bg-emerald-300', textColor: 'text-emerald-400' },
+        { label: 'Gred D', percent: uasaMetrics.pD, count: uasaMetrics.d, color: 'bg-amber-300 hover:bg-amber-400', textColor: 'text-amber-500' },
+        { label: 'Gred E', percent: uasaMetrics.pE, count: uasaMetrics.e, color: 'bg-amber-200 hover:bg-amber-300', textColor: 'text-amber-400' },
+        { label: 'Gred F', percent: uasaMetrics.pF, count: uasaMetrics.f, color: 'bg-rose-400 hover:bg-rose-500', textColor: 'text-rose-600' },
+        { label: 'TH', percent: uasaMetrics.pTH, count: uasaMetrics.th, color: 'bg-slate-300 hover:bg-slate-400', textColor: 'text-slate-500' },
+      ];
+
+      // PBD Grouped Bars
+      const pbdGroupedBars = React.useMemo(() => {
+        const total = pbdMetrics.total || 1;
+        return [
+          { label: 'TD', percent: ((pbdMetrics.td / total) * 100).toFixed(1), count: pbdMetrics.td, color: 'bg-slate-300 hover:bg-slate-400', textColor: 'text-slate-500' },
+          { label: 'TP 1 & TP 2', percent: (((pbdMetrics.tp1 + pbdMetrics.tp2) / total) * 100).toFixed(1), count: (pbdMetrics.tp1 + pbdMetrics.tp2), color: 'bg-rose-300 hover:bg-rose-400', textColor: 'text-rose-500' },
+          { label: 'TP 3 & TP 4', percent: (((pbdMetrics.tp3 + pbdMetrics.tp4) / total) * 100).toFixed(1), count: (pbdMetrics.tp3 + pbdMetrics.tp4), color: 'bg-emerald-300 hover:bg-emerald-400', textColor: 'text-emerald-500' },
+          { label: 'TP 5 & TP 6', percent: (((pbdMetrics.tp5 + pbdMetrics.tp6) / total) * 100).toFixed(1), count: (pbdMetrics.tp5 + pbdMetrics.tp6), color: 'bg-purple-400 hover:bg-purple-500', textColor: 'text-purple-500' }
+        ];
+      }, [pbdMetrics]);
+
+      // UASA Grouped Bars
+      const uasaGroupedBars = React.useMemo(() => {
+        const total = uasaMetrics.total || 1;
+        return [
+          { label: 'Kelompok Baik (A,B,C)', percent: (((uasaMetrics.a + uasaMetrics.b + uasaMetrics.c) / total) * 100).toFixed(1), count: (uasaMetrics.a + uasaMetrics.b + uasaMetrics.c), color: 'bg-emerald-400 hover:bg-emerald-500', textColor: 'text-emerald-600' },
+          { label: 'Kelompok Near Miss (D,E)', percent: (((uasaMetrics.d + uasaMetrics.e) / total) * 100).toFixed(1), count: (uasaMetrics.d + uasaMetrics.e), color: 'bg-amber-400 hover:bg-amber-500', textColor: 'text-amber-500' },
+          { label: 'Kelompok Intervensi (F)', percent: ((uasaMetrics.f / total) * 100).toFixed(1), count: uasaMetrics.f, color: 'bg-rose-400 hover:bg-rose-500', textColor: 'text-rose-500' },
+          { label: 'Tidak Hadir (TH)', percent: ((uasaMetrics.th / total) * 100).toFixed(1), count: uasaMetrics.th, color: 'bg-slate-300 hover:bg-slate-400', textColor: 'text-slate-500' }
+        ];
+      }, [uasaMetrics]);
+
+      // PBD Except Subject Filter
+      const pbdRowsFilteredExceptSubject = React.useMemo(() => {
+        return rawPBDRows.filter(row => {
+          const keys = ['ppd', 'school', 'schoolCode', 'schoolType', 'level', 'location', 'dlp'];
+          for (const key of keys) {
+            if (pbdFilters[key] && pbdFilters[key] !== 'ALL' && row.categories[key] !== pbdFilters[key]) return false;
+          }
+          return true;
+        });
+      }, [rawPBDRows, pbdFilters]);
+
+      // PBD Subject Analysis List
+      const pbdSubjectAnalysisList = React.useMemo(() => {
+        const subjectMap = {};
+        pbdRowsFilteredExceptSubject.forEach(row => {
+          const sub = row.categories.subject;
+          if (!sub || sub === 'N/A') return;
+          if (!subjectMap[sub]) {
+            subjectMap[sub] = { subjectName: sub, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, td: 0, total: 0, assessed: 0 };
+          }
+          subjectMap[sub].tp1 += row.counts.tp1; subjectMap[sub].tp2 += row.counts.tp2; subjectMap[sub].tp3 += row.counts.tp3;
+          subjectMap[sub].tp4 += row.counts.tp4; subjectMap[sub].tp5 += row.counts.tp5; subjectMap[sub].tp6 += row.counts.tp6;
+          subjectMap[sub].td += row.counts.td; subjectMap[sub].total += row.counts.totalRowStudents; subjectMap[sub].assessed += row.counts.totalAssessed;
+        });
+
+        return Object.values(subjectMap).map(subData => {
+          const sumAll = subData.total || 1;
+          return {
+            ...subData,
+            passRate: parseFloat((((subData.tp3 + subData.tp4 + subData.tp5 + subData.tp6) / sumAll) * 100).toFixed(1)),
+            excelRate: parseFloat((((subData.tp5 + subData.tp6) / sumAll) * 100).toFixed(1)),
+            critRate: parseFloat((((subData.tp1 + subData.tp2) / sumAll) * 100).toFixed(1)),
+          };
+        }).sort((a, b) => b[activePbdSubjectMetric] - a[activePbdSubjectMetric]);
+      }, [pbdRowsFilteredExceptSubject, activePbdSubjectMetric]);
+
+      // UASA Except Subject Filter
+      const uasaRowsFilteredExceptSubject = React.useMemo(() => {
+        return rawUASARows.filter(row => {
+          const keys = ['ppd', 'school', 'schoolCode', 'schoolType', 'level', 'location', 'dlp'];
+          for (const key of keys) {
+            if (uasaFilters[key] && uasaFilters[key] !== 'ALL' && row.categories[key] !== uasaFilters[key]) return false;
+          }
+          return true;
+        });
+      }, [rawUASARows, uasaFilters]);
+
+      // UASA Subject Analysis List
+      const uasaSubjectAnalysisList = React.useMemo(() => {
+        const subjectMap = {};
+        uasaRowsFilteredExceptSubject.forEach(row => {
+          const sub = row.categories.subject;
+          if (!sub || sub === 'N/A') return;
+          if (!subjectMap[sub]) {
+            subjectMap[sub] = { subjectName: sub, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0, th: 0, total: 0, assessed: 0 };
+          }
+          subjectMap[sub].a += row.counts.a; subjectMap[sub].b += row.counts.b; subjectMap[sub].c += row.counts.c;
+          subjectMap[sub].d += row.counts.d; subjectMap[sub].e += row.counts.e; subjectMap[sub].f += row.counts.f;
+          subjectMap[sub].th += row.counts.th; subjectMap[sub].total += row.counts.totalRowStudents; subjectMap[sub].assessed += row.counts.totalAssessed;
+        });
+
+        return Object.values(subjectMap).map(subData => {
+          const sumAll = subData.total || 1;
+          return {
+            ...subData,
+            baikRate: parseFloat((((subData.a + subData.b + subData.c) / sumAll) * 100).toFixed(1)),
+            nearMissRate: parseFloat((((subData.d + subData.e) / sumAll) * 100).toFixed(1)),
+            intervensiRate: parseFloat(((subData.f / sumAll) * 100).toFixed(1)),
+          };
+        }).sort((a, b) => b[activeUasaSubjectMetric] - a[activeUasaSubjectMetric]);
+      }, [uasaRowsFilteredExceptSubject, activeUasaSubjectMetric]);
+
+      // Penyelarasan subjek analisis terpilih apabila data dimuat naik
+      React.useEffect(() => {
+        if (pbdSubjectAnalysisList.length > 0 && !selectedPbdAnalysisSubject) {
+          setSelectedPbdAnalysisSubject(pbdSubjectAnalysisList[0].subjectName);
+        }
+      }, [pbdSubjectAnalysisList, selectedPbdAnalysisSubject]);
+
+      React.useEffect(() => {
+        if (uasaSubjectAnalysisList.length > 0 && !selectedUasaAnalysisSubject) {
+          setSelectedUasaAnalysisSubject(uasaSubjectAnalysisList[0].subjectName);
+        }
+      }, [uasaSubjectAnalysisList, selectedUasaAnalysisSubject]);
+
+      // Detail Data Subjek Terpilih
+      const selectedPbdSubjectDetails = React.useMemo(() => {
+        return pbdSubjectAnalysisList.find(s => s.subjectName === selectedPbdAnalysisSubject) || null;
+      }, [pbdSubjectAnalysisList, selectedPbdAnalysisSubject]);
+
+      const selectedUasaSubjectDetails = React.useMemo(() => {
+        return uasaSubjectAnalysisList.find(s => s.subjectName === selectedUasaAnalysisSubject) || null;
+      }, [uasaSubjectAnalysisList, selectedUasaAnalysisSubject]);
+
+      const handleResetFilters = () => {
+        if (currentSystem === 'pbd') {
+          setPbdFilters({ ppd: 'ALL', school: 'ALL', schoolCode: 'ALL', schoolType: 'ALL', level: 'ALL', subject: 'ALL', location: 'ALL', dlp: 'ALL' });
+          setPbdSortConfig({ key: 'school', direction: 'asc' });
+          setClickedPbdBar(null);
+          setClickedPbdGroupedBar(null);
+        } else {
+          setUasaFilters({ ppd: 'ALL', school: 'ALL', schoolCode: 'ALL', schoolType: 'ALL', level: 'ALL', subject: 'ALL', location: 'ALL', dlp: 'ALL' });
+          setUasaSortConfig({ key: 'school', direction: 'asc' });
+          setClickedUasaBar(null);
+          setClickedUasaGroupedBar(null);
+        }
+      };
+
+      // Merekodkan aktiviti pertukaran sistem semasa sistem berubah
+      React.useEffect(() => {
+        if (isLoggedIn && userEmail) {
+          sendLogToGoogleSheet(userEmail, "TUKAR_MOD_SISTEM", currentSystem);
+        }
+      }, [currentSystem]);
+
+      const filterMetadata = {
+        ppd: { label: 'Pejabat Pendidikan Daerah (PPD)', icon: IconSchool },
+        school: { label: 'Nama Institusi / Sekolah', icon: IconSchool },
+        schoolCode: { label: 'Kod Sekolah', icon: IconLayers },
+        schoolType: { label: 'Jenis Sekolah', icon: IconSchool },
+        level: { label: 'Tahun / Tingkatan', icon: IconLayers },
+        subject: { label: 'Mata Pelajaran (MP)', icon: IconBookOpen },
+        location: { label: 'Lokasi Kawasan', icon: IconMapPin },
+        dlp: { label: 'Status DLP', icon: IconSparkles }
+      };
+
+      const filterAllLabels = {
+        ppd: 'SEMUA PPD',
+        school: 'SEMUA INSTITUSI',
+        schoolCode: 'SEMUA KOD SEKOLAH',
+        schoolType: 'SEMUA JENIS SEKOLAH',
+        level: 'SEMUA TAHUN / TINGKATAN',
+        subject: 'SEMUA MATA PELAJARAN',
+        location: 'SEMUA LOKASI',
+        dlp: 'SEMUA STATUS DLP'
+      };
+
+      // ==========================================
+      // RENDERING HALAMAN LOG MASUK (ID DELIMa)
+      // ==========================================
+      if (!isLoggedIn) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-[#4F359B] via-[#3B257B] to-[#1E1145] flex items-center justify-center p-6 relative overflow-hidden">
+            {/* Hiasan Latar Belakang Lingkaran Cahaya */}
+            <div className="absolute top-0 -left-40 w-96 h-96 bg-[#F59E0B]/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 -right-40 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl"></div>
+
+            <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white/20 p-8 space-y-8 hover-scale transition-all">
+              {/* Kepala Kad Log Masuk */}
+              <div className="text-center space-y-3">
+                <div className="w-20 h-20 rounded-3xl bg-amber-400 mx-auto flex items-center justify-center font-black text-[#4F359B] shadow-lg text-2xl tracking-wide border-2 border-white/30">
+                  JPN
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-xl font-black text-slate-950 uppercase tracking-wide">Portal Dashboard Bersepadu</h2>
+                  <p className="text-xs font-bold text-[#4F359B] uppercase tracking-widest">PBD & UASA Perak 2025</p>
+                  <p className="text-[11px] text-slate-400">Sektor Pembelajaran Jabatan Pendidikan Negeri Perak</p>
+                </div>
+              </div>
+
+              {/* Garis Pembahagi */}
+              <div className="h-px bg-slate-100 w-full"></div>
+
+              {/* Borang Log Masuk */}
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">ID DELIMa Pengguna</label>
+                  <div className="relative">
+                    <input 
+                      type="email"
+                      value={inputEmail}
+                      onChange={(e) => setInputEmail(e.target.value)}
+                      placeholder="g-12345678@moe-dl.edu.my"
+                      className="w-full bg-slate-50 border border-slate-200 text-xs font-bold px-4 py-3.5 rounded-2xl text-slate-800 focus:ring-2 focus:ring-[#4F359B] focus:border-[#4F359B] transition-all outline-none"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400">Pastikan anda menggunakan e-mel rasmi Kementerian Pendidikan Malaysia.</p>
+                </div>
+
+                {/* Notifikasi Ralat Log Masuk */}
+                {loginError && (
+                  <div className="bg-rose-50 border border-rose-100 text-rose-600 p-3.5 rounded-2xl text-[11px] font-bold shadow-sm flex items-start gap-2 animate-pulse">
+                    <div className="shrink-0 mt-0.5"><IconAlertTriangle /></div>
+                    <span>{loginError}</span>
+                  </div>
+                )}
+
+                {/* Butang Log Masuk DELIMa Menggunakan Imej yang Disediakan */}
+                <div className="pt-2">
+                  <button 
+                    type="submit" 
+                    className="w-full flex items-center justify-center transition-all transform hover:scale-[1.03] active:scale-95 focus:outline-none"
+                  >
+                    <img 
+                      src="image_6dd8c5.png" 
+                      alt="Log Masuk dengan ID DELIMa" 
+                      className="w-full object-contain cursor-pointer"
+                      onError={(e) => {
+                        // Sandaran (fallback) sekiranya imej gagal dimuatkan
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    {/* Sandaran CSS sekiranya fail imej tiada dalam direktori */}
+                    <div className="hidden w-full items-center justify-center gap-3 py-3.5 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-2xl shadow-md transition-all">
+                      <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.578-7.859-8s3.53-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.977 0-.74-.08-1.302-.177-1.868H12.24z"/>
+                      </svg>
+                      <span>Log Masuk dengan ID DELIMa</span>
+                    </div>
+                  </button>
+                </div>
+              </form>
+
+              {/* Garis Pembahagi */}
+              <div className="h-px bg-slate-100 w-full"></div>
+
+              {/* Maklumat Tambahan / Sokongan */}
+              <div className="text-center space-y-1">
+                <p className="text-[10px] text-slate-400 font-bold">Portal ini dikawal selia di bawah Standard Keselamatan ICT JPN.</p>
+                <p className="text-[9px] text-slate-300">© 2026 JPN Perak • Hak Cipta Terpelihara</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // ==========================================
+      // RENDERING UTAMA DASHBOARD PORTAL BERSEPADU
+      // ==========================================
+      return (
+        <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans text-slate-800">
+          
+          {/* MENU NAVIGASI SISI (SIDEBAR) */}
+          <aside className="w-80 bg-gradient-to-b from-[#4F359B] to-[#3B257B] text-white flex flex-col shrink-0 shadow-2xl">
+            <div className="p-6 border-b border-[#ffffff15] flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-amber-400 flex items-center justify-center font-bold text-[#4F359B] shadow-lg text-lg">JPN</div>
+              <div className="flex-1">
+                <h2 className="font-extrabold text-sm leading-tight uppercase tracking-wider">Portal Bersepadu</h2>
+                <p className="text-[10px] text-purple-200">PBD & UASA Perak 2025</p>
+              </div>
+              {/* Butang Tetapan Integrasi Google Sheets */}
+              <button 
+                onClick={() => { setTempScriptUrl(googleScriptUrl); setShowSettingsModal(true); }}
+                className="p-1.5 hover:bg-white/10 rounded-lg text-purple-200 hover:text-white transition-all"
+                title="Tetapan Google Sheet Web App URL"
+              >
+                <IconSettings />
+              </button>
+            </div>
+
+            {/* Suis Pilihan Sistem Mod Moden */}
+            <div className="p-4 border-b border-[#ffffff10] bg-[#311d67]">
+              <p className="text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-2.5">Pilih Mod Pentaksiran</p>
+              <div className="grid grid-cols-2 gap-2 bg-[#251354] p-1.5 rounded-2xl">
+                <button 
+                  onClick={() => setCurrentSystem('pbd')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all ${currentSystem === 'pbd' ? 'bg-amber-400 text-[#3B257B] shadow-md' : 'text-purple-100 hover:bg-white/5'}`}
+                >
+                  Sistem PBD
+                </button>
+                <button 
+                  onClick={() => setCurrentSystem('uasa')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all ${currentSystem === 'uasa' ? 'bg-amber-400 text-[#3B257B] shadow-md' : 'text-purple-100 hover:bg-white/5'}`}
+                >
+                  Sistem UASA
+                </button>
+              </div>
+            </div>
+
+            {/* Navigasi Sub-Tab Mengikut Mod */}
+            <nav className="p-4 flex-1 space-y-1.5 overflow-y-auto no-scrollbar">
+              {currentSystem === 'pbd' ? (
+                <>
+                  <p className="text-[10px] font-bold text-purple-300 uppercase tracking-widest px-4 py-1">MENU PBD</p>
+                  <button 
+                    onClick={() => { setPbdTab('ringkasan'); setClickedPbdBar(null); setClickedPbdGroupedBar(null); }} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${pbdTab === 'ringkasan' ? 'bg-white/15 text-white border-l-4 border-amber-400' : 'text-purple-100 hover:bg-white/5'}`}
+                  >
+                    <IconSliders /> Dashboard Ringkasan PBD
+                  </button>
+                  <button 
+                    onClick={() => { setPbdTab('subjek'); setClickedPbdBar(null); setClickedPbdGroupedBar(null); }} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${pbdTab === 'subjek' ? 'bg-white/15 text-white border-l-4 border-amber-400' : 'text-purple-100 hover:bg-white/5'}`}
+                  >
+                    <IconBookOpen /> Analisis Mata Pelajaran PBD
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-[10px] font-bold text-purple-300 uppercase tracking-widest px-4 py-1">MENU UASA</p>
+                  <button 
+                    onClick={() => { setUasaTab('ringkasan'); setClickedUasaBar(null); setClickedUasaGroupedBar(null); }} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${uasaTab === 'ringkasan' ? 'bg-white/15 text-white border-l-4 border-amber-400' : 'text-purple-100 hover:bg-white/5'}`}
+                  >
+                    <IconSliders /> Dashboard Ringkasan UASA
+                  </button>
+                  <button 
+                    onClick={() => { setUasaTab('subjek'); setClickedUasaBar(null); setClickedUasaGroupedBar(null); }} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${uasaTab === 'subjek' ? 'bg-white/15 text-white border-l-4 border-amber-400' : 'text-purple-100 hover:bg-white/5'}`}
+                  >
+                    <IconBookOpen /> Analisis Mata Pelajaran UASA
+                  </button>
+                </>
+              )}
+            </nav>
+
+            {/* Muat Naik Manual Mengikut Sistem */}
+            <div className="p-4 border-t border-[#ffffff15] bg-[#331e6c] space-y-4">
+              <div className="space-y-2">
+                <p className="text-[9px] font-bold text-purple-200 uppercase tracking-wider block">Muat Naik Fail Manual PBD (.csv)</p>
+                <label className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-900 hover:bg-purple-800 text-white rounded-xl text-[11px] font-bold border border-purple-700 cursor-pointer transition-all shadow-inner">
+                  <IconUpload />
+                  <span>Sedia Fail PBD (.csv)</span>
+                  <input type="file" accept=".csv" onChange={handleManualPBDUpload} className="hidden" />
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[9px] font-bold text-purple-200 uppercase tracking-wider block">Muat Naik Fail Manual UASA (.xlsx)</p>
+                <label className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-900 hover:bg-purple-800 text-white rounded-xl text-[11px] font-bold border border-purple-700 cursor-pointer transition-all shadow-inner">
+                  <IconUpload />
+                  <span>Sedia Fail UASA (.xlsx)</span>
+                  <input type="file" accept=".xlsx, .xls" onChange={handleManualUASAUpload} className="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <div className="p-6 bg-[#261356] text-[10px] space-y-1 text-purple-200">
+              <p className="flex items-center gap-2 font-bold text-emerald-400">● Sesi Akademik 2025</p>
+              <p>© 2026 JPN Perak • v5.0 Bersepadu</p>
+            </div>
+          </aside>
+
+          {/* AREA KONTEN UTAMA */}
+          <main className="flex-1 flex flex-col overflow-hidden relative">
+            
+            {/* Modal Tetapan Google Sheets Web App URL */}
+            {showSettingsModal && (
+              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                      <IconSettings /> Tetapan Integrasi Google Sheets
+                    </h3>
+                    <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">×</button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Sila tampal <strong>URL Web App (Penyebaran / Deployment)</strong> yang telah dijana dari Google Apps Script Google Sheets anda untuk membolehkan portal menyimpan log masuk pengguna secara automatik.
+                  </p>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">URL Web App Google Apps Script</label>
+                    <input 
+                      type="text" 
+                      value={tempScriptUrl} 
+                      onChange={(e) => setTempScriptUrl(e.target.value)}
+                      placeholder="https://script.google.com/macros/s/.../exec"
+                      className="w-full bg-slate-50 border border-slate-200 text-xs px-4 py-3 rounded-xl focus:ring-2 focus:ring-[#4F359B] outline-none"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-3">
+                    <button 
+                      onClick={() => setShowSettingsModal(false)} 
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={() => { setGoogleScriptUrl(tempScriptUrl); setShowSettingsModal(false); }} 
+                      className="px-4 py-2 bg-[#4F359B] hover:bg-[#3B257B] text-white font-bold text-xs rounded-xl transition"
+                    >
+                      Simpan URL
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ATASAN HEADER */}
+            <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 shadow-sm z-10">
+              <div className="flex items-center gap-4 text-xs font-semibold">
+                <span className="text-slate-400">Ketersediaan Portal:</span>
+                
+                <span className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 text-[10px] font-black uppercase ${!isLoadingPBD ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${!isLoadingPBD ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-500'}`}></span>
+                  PBD: {!isLoadingPBD ? `Live (N=${pbdMetrics.total.toLocaleString()})` : 'Tiada Data'}
+                </span>
+
+                <span className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 text-[10px] font-black uppercase ${!isLoadingUASA ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${!isLoadingUASA ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-500'}`}></span>
+                  UASA: {!isLoadingUASA ? `Live (N=${uasaMetrics.total.toLocaleString()})` : 'Tiada Data'}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => { fetchPBDData(); fetchUASAData(); }} 
+                  className="p-2 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-xl transition text-slate-600" 
+                  title="Segarkan Semua Data Semasa"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19M9 5a9 9 0 018.967 8.967m-8.967-8.967L12 3M9 5l3 3" />
+                  </svg>
+                </button>
+                <div className="h-8 w-px bg-slate-200"></div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-slate-900 leading-none">ID: {userEmail}</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Sektor Pembelajaran Perak</p>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="px-3.5 py-2 bg-rose-50 border border-rose-100 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                    title="Log Keluar"
+                  >
+                    Log Keluar
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {/* Wadah Utama yang Dapat Discroll */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-[#F8FAFC] no-scrollbar">
+              
+              {/* Notifikasi Kendala Fail */}
+              {currentSystem === 'pbd' && pbdError && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-5 rounded-3xl text-xs font-semibold shadow-sm flex flex-col gap-1.5">
+                  <p className="font-bold flex items-center gap-2"><IconAlertTriangle /> Maklum Balas Pelayan PBD:</p>
+                  <p>{pbdError}</p>
+                </div>
+              )}
+
+              {currentSystem === 'uasa' && uasaError && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-5 rounded-3xl text-xs font-semibold shadow-sm flex flex-col gap-1.5">
+                  <p className="font-bold flex items-center gap-2"><IconAlertTriangle /> Maklum Balas Pelayan UASA:</p>
+                  <p>{uasaError}</p>
+                </div>
+              )}
+
+              {/* Banner Bersepadu Dinamik */}
+              <div className="bg-gradient-to-r from-[#4F359B] to-[#3B257B] text-white p-7 rounded-3xl shadow-lg relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1.5 z-10">
+                  <span className="bg-amber-400 text-[#3B257B] font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider">
+                    Sistem Aktif: {currentSystem.toUpperCase()} 2025
+                  </span>
+                  <h1 className="text-2xl font-extrabold tracking-tight">
+                    {currentSystem === 'pbd' ? 'Sistem Maklumat Pentaksiran Bilik Darjah (PBD)' : 'Sistem Analisis Ujian Akhir Sesi Akademik (UASA)'}
+                  </h1>
+                  <p className="text-purple-100 text-xs opacity-90">
+                    {currentSystem === 'pbd' ? 'Konsol bersepadu mengawal selia prestasi murid mengikut gred TP pentaksiran sekolah.' : 'Konsol analisis hasil keputusan akademik murid mengikut gred UASA standard JPN.'}
+                  </p>
+                </div>
+                <button onClick={handleResetFilters} className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-xs font-bold border border-white/20 transition-all shadow-sm z-20 whitespace-nowrap">
+                  Set Semula Saringan ({currentSystem.toUpperCase()})
+                </button>
+              </div>
+
+              {/* PANEL SARINGAN DINAMIK */}
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 z-20 relative">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">Saringan Pintar Berkait ({currentSystem.toUpperCase()})</h4>
+                  <span className="text-[10px] bg-purple-50 text-[#4F359B] font-bold px-2 py-1 rounded-md">
+                    Automatik merendahkan data tidak berkaitan
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {Object.keys(filterMetadata).map(key => {
+                    const meta = filterMetadata[key];
+                    const IconComponent = meta.icon;
+                    
+                    const value = currentSystem === 'pbd' ? pbdFilters[key] : uasaFilters[key];
+                    const availableOptions = currentSystem === 'pbd' ? (pbdDynamicOptions[key] || []) : (uasaDynamicOptions[key] || []);
+
+                    return (
+                      <div key={key} className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 truncate">
+                          <IconComponent /> {meta.label}
+                        </label>
+                        <select 
+                          value={value || 'ALL'} 
+                          onChange={(e) => { 
+                            if (currentSystem === 'pbd') {
+                              setPbdFilters(prev => ({ ...prev, [key]: e.target.value }));
+                              setClickedPbdBar(null);
+                              setClickedPbdGroupedBar(null);
+                            } else {
+                              setUasaFilters(prev => ({ ...prev, [key]: e.target.value }));
+                              setClickedUasaBar(null);
+                              setClickedUasaGroupedBar(null);
+                            }
+                          }} 
+                          className="w-full bg-slate-50 border border-slate-200 text-xs font-bold px-3 py-2.5 rounded-2xl text-slate-700 focus:ring-2 focus:ring-[#4F359B] transition-all outline-none cursor-pointer uppercase"
+                        >
+                          <option value="ALL">{filterAllLabels[key] || 'SEMUA'}</option>
+                          {availableOptions.map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* KAD INDIKATOR KPI UTAMA (DINAMIK) */}
+              {currentSystem === 'pbd' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 z-10 relative">
+                  {[
+                    { label: 'Peratus Murid Ditaksir', val: `${pbdMetrics.assessedRate}%`, trend: `${pbdMetrics.assessedCount.toLocaleString()} daripada ${pbdMetrics.total.toLocaleString()} rekod`, icon: IconUsers, bg: 'bg-blue-50', color: 'text-blue-600' },
+                    { label: 'Melepasi TP Minimum', val: `${pbdMetrics.passRate}%`, trend: 'Standard Kelayakan (TP3+)', icon: IconCheckCircle, bg: 'bg-amber-50', color: 'text-amber-500' },
+                    { label: 'Sasaran Intervensi', val: `${pbdMetrics.critRate}%`, trend: 'Bimbingan Rapi (TP1-2)', icon: IconAlertTriangle, bg: 'bg-rose-50', color: 'text-rose-600', isCrit: true },
+                    { label: 'Cemerlang', val: `${pbdMetrics.excelRate}%`, trend: 'Kemahiran Tinggi (TP5-6)', icon: IconSparkles, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+                  ].map((kpi, idx) => {
+                    const IconComponent = kpi.icon;
+                    return (
+                      <div key={idx} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-all">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{kpi.label}</p>
+                          <h3 className={`text-2xl font-black ${kpi.color}`}>{kpi.val}</h3>
+                          <p className={`text-[10px] font-bold mt-1 ${kpi.isCrit ? 'text-rose-500' : 'text-emerald-600'}`}>{kpi.trend}</p>
+                        </div>
+                        <div className={`p-3.5 rounded-2xl ${kpi.bg} ${kpi.color}`}><IconComponent /></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 z-10 relative">
+                  {[
+                    { label: 'Peratus Murid Hadir', val: `${uasaMetrics.assessedRate}%`, trend: `${uasaMetrics.assessedCount.toLocaleString()} daripada ${uasaMetrics.total.toLocaleString()} murid ditaksir`, icon: IconUsers, bg: 'bg-blue-50', color: 'text-blue-600' },
+                    { label: 'Kelompok Baik (A, B, C)', val: `${uasaMetrics.baikRate}%`, trend: 'Standard Kelayakan Baik (Hijau)', icon: IconCheckCircle, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+                    { label: 'Kelompok Near Miss (D, E)', val: `${uasaMetrics.nearMissRate}%`, trend: 'Kategori Bimbingan Asas (Kuning)', icon: IconSparkles, bg: 'bg-amber-50', color: 'text-amber-500' },
+                    { label: 'Perlu Intervensi (F)', val: `${uasaMetrics.intervensiRate}%`, trend: 'Bimbingan Rapi Diperlukan (Merah)', icon: IconAlertTriangle, bg: 'bg-rose-50', color: 'text-rose-600', isCrit: true },
+                  ].map((kpi, idx) => {
+                    const IconComponent = kpi.icon;
+                    return (
+                      <div key={idx} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-all">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{kpi.label}</p>
+                          <h3 className={`text-2xl font-black ${kpi.color}`}>{kpi.val}</h3>
+                          <p className={`text-[10px] font-bold mt-1 ${kpi.isCrit ? 'text-rose-500' : 'text-slate-500'}`}>{kpi.trend}</p>
+                        </div>
+                        <div className={`p-3.5 rounded-2xl ${kpi.bg} ${kpi.color}`}><IconComponent /></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* KAWASAN MEMPROSES LOADING UNTUK KEDUA-DUA SISTEM */}
+              {((currentSystem === 'pbd' && isLoadingPBD) || (currentSystem === 'uasa' && isLoadingUASA)) && (
+                <div className="flex flex-col items-center justify-center p-20 space-y-4 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                  <div className="w-12 h-12 border-4 border-[#4F359B] border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-sm font-semibold text-slate-600">Sedang memproses data {currentSystem.toUpperCase()}...</p>
+                </div>
+              )}
+
+              {/* TIADA DATA ATAU REKOD FILTER KOSONG */}
+              {currentSystem === 'pbd' && !isLoadingPBD && rawPBDRows.length === 0 && (
+                <div className="bg-white p-16 rounded-[2rem] text-center border border-slate-100 space-y-6 flex flex-col items-center justify-center">
+                  <div className="p-4 bg-slate-100 text-slate-400 rounded-full"><IconAlertTriangle /></div>
+                  <h3 className="text-lg font-black text-slate-950">Tiada Data PBD Diimport</h3>
+                  <p className="text-xs text-slate-400 max-w-md">Sila muat naik fail data PBD (.csv) secara manual menerusi panel sisi.</p>
+                </div>
+              )}
+
+              {currentSystem === 'uasa' && !isLoadingUASA && rawUASARows.length === 0 && (
+                <div className="bg-white p-16 rounded-[2rem] text-center border border-slate-100 space-y-6 flex flex-col items-center justify-center">
+                  <div className="p-4 bg-slate-100 text-slate-400 rounded-full"><IconAlertTriangle /></div>
+                  <h3 className="text-lg font-black text-slate-900">Tiada Data UASA Diimport</h3>
+                  <p className="text-xs text-slate-400 max-w-md">Sila muat naik fail data UASA (.xlsx) secara manual menerusi panel sisi.</p>
+                </div>
+              )}
+
+              {/* SISTEM PBD - DASHBOARD UTAMA */}
+              {currentSystem === 'pbd' && !isLoadingPBD && rawPBDRows.length > 0 && pbdTab === 'ringkasan' && (
+                <div className="w-full space-y-8">
+                  
+                  {/* CARTA TABURAN TP INDIVIDU PBD */}
+                  <div className="bg-white p-9 rounded-[2rem] shadow-sm border border-slate-100 space-y-8 relative w-full">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5">
+                        <h3 className="text-xl font-black text-slate-950 tracking-tight">Taburan Tahap Penguasaan (TP) Sekolah</h3>
+                        <p className="text-xs text-slate-400 font-medium italic">Pecahan murid mengikut peratusan (%) penguasaan PBD</p>
+                      </div>
+                      <div className="bg-purple-50 text-[#4F359B] text-[10px] font-black px-4 py-2 rounded-2xl border border-purple-100 shadow-sm uppercase tracking-wider max-w-[200px] truncate">
+                        {pbdFilters.subject === 'ALL' ? 'Semua Subjek' : pbdFilters.subject}
+                      </div>
+                    </div>
+
+                    <div className="h-64 flex items-end justify-between px-4 pt-4 border-b border-slate-100 mb-4">
+                      {pbdBars.map((bar, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 group w-12 cursor-pointer relative" onClick={() => { setClickedPbdBar(clickedPbdBar === i ? null : i); setClickedPbdGroupedBar(null); }}>
+                          <span className={`text-xs font-black ${bar.textColor} mb-1`}>{bar.percent}%</span>
+                          <div 
+                            className={`w-full ${bar.color} rounded-t-xl transition-all duration-300 shadow-sm relative ${clickedPbdBar === i ? 'ring-4 ring-offset-2 ring-purple-400 border border-purple-500' : 'hover:opacity-90'}`} 
+                            style={{ height: `${Math.max(10, Math.min(180, parseFloat(bar.percent) * 3.5))}px` }}
+                          >
+                            {clickedPbdBar === i && (
+                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold whitespace-nowrap shadow-2xl z-50 animate-bounce">
+                                {bar.count.toLocaleString()} rekod ditaksir
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-black text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg mt-1">{bar.label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-slate-500 bg-[#F8FAFC] p-5 rounded-[1.5rem] border border-slate-100 gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm animate-pulse"></div>
+                        <p className="font-bold">Tahap Majoriti: <span className="text-slate-950 font-black ml-1">{pbdMetrics.majorityTp} ({pbdMetrics.majorityPercent}%)</span></p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-purple-600 font-black">
+                        <IconMousePointer />
+                        <span>Sila klik pada bar graf untuk melihat jumlah murid ditaksir.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARTA TABURAN KELOMPOK AGREGAT PBD */}
+                  <div className="bg-white p-9 rounded-[2rem] shadow-sm border border-slate-100 space-y-8 relative w-full">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5">
+                        <h3 className="text-xl font-black text-slate-950 tracking-tight">Analisis Agregat Mengikut Kumpulan Kategori PBD</h3>
+                        <p className="text-xs text-slate-400 font-medium italic">Perbandingan antara TD, murid memerlukan intervensi (TP1-2), pelepasan asas (TP3-4), dan cemerlang (TP5-6)</p>
+                      </div>
+                      <div className="bg-amber-50 text-amber-800 text-[10px] font-black px-4 py-2 rounded-2xl border border-amber-200 shadow-sm uppercase tracking-wider">
+                        Analisis Kumpulan
+                      </div>
+                    </div>
+
+                    <div className="h-64 flex items-end justify-around px-8 pt-4 border-b border-slate-100 mb-4">
+                      {pbdGroupedBars.map((bar, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 group w-24 cursor-pointer relative" onClick={() => { setClickedPbdGroupedBar(clickedPbdGroupedBar === i ? null : i); setClickedPbdBar(null); }}>
+                          <span className={`text-sm font-black ${bar.textColor} mb-1`}>{bar.percent}%</span>
+                          <div 
+                            className={`w-16 ${bar.color} rounded-t-2xl transition-all duration-300 shadow-md relative ${clickedPbdGroupedBar === i ? 'ring-4 ring-offset-2 ring-purple-400 border border-purple-500' : 'hover:opacity-90'}`} 
+                            style={{ height: `${Math.max(10, Math.min(180, parseFloat(bar.percent) * 2.8))}px` }}
+                          >
+                            {clickedPbdGroupedBar === i && (
+                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap shadow-2xl z-50 animate-bounce">
+                                {bar.count.toLocaleString()} rekod ditaksir
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-xs font-black text-slate-700 bg-slate-100 px-4 py-1.5 rounded-xl mt-1 text-center whitespace-nowrap">{bar.label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-slate-500 bg-[#F8FAFC] p-5 rounded-[1.5rem] border border-slate-100 gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-3.5 h-3.5 rounded-full bg-amber-500 shadow-sm animate-pulse"></div>
+                        <p className="font-bold">Kelompok Majoriti: <span className="text-slate-950 font-black ml-1">
+                          {pbdGroupedBars.length > 0 ? (
+                            [...pbdGroupedBars].sort((a, b) => parseFloat(b.percent) - parseFloat(a.percent))[0]?.label
+                          ) : 'N/A'} (
+                          {pbdGroupedBars.length > 0 ? (
+                            [...pbdGroupedBars].sort((a, b) => parseFloat(b.percent) - parseFloat(a.percent))[0]?.percent
+                          ) : '0.0'}%)
+                        </span></p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-purple-600 font-black">
+                        <IconMousePointer />
+                        <span>Sila klik pada bar untuk melihat agihan jumlah murid ditaksir bagi kumpulan terpilih.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* SISTEM UASA - DASHBOARD UTAMA */}
+              {currentSystem === 'uasa' && !isLoadingUASA && rawUASARows.length > 0 && uasaTab === 'ringkasan' && (
+                <div className="w-full space-y-8">
+                  
+                  {/* GRAFIK TABURAN GRED INDIVIDU UASA */}
+                  <div className="bg-white p-9 rounded-[2rem] shadow-sm border border-slate-100 space-y-8 relative w-full">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5">
+                        <h3 className="text-xl font-black text-slate-950 tracking-tight">Taburan Gred Pencapaian UASA</h3>
+                        <p className="text-xs text-slate-400 font-medium italic">Pecahan murid mengikut peratusan (%) gred pencapaian individu</p>
+                      </div>
+                      <div className="bg-purple-50 text-[#4F359B] text-[10px] font-black px-4 py-2 rounded-2xl border border-purple-100 shadow-sm uppercase tracking-wider max-w-[200px] truncate">
+                        {uasaFilters.subject === 'ALL' ? 'Semua Subjek' : uasaFilters.subject}
+                      </div>
+                    </div>
+
+                    <div className="h-64 flex items-end justify-between px-4 pt-4 border-b border-slate-100 mb-4">
+                      {uasaBars.map((bar, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 group w-12 cursor-pointer relative" onClick={() => { setClickedUasaBar(clickedUasaBar === i ? null : i); setClickedUasaGroupedBar(null); }}>
+                          <span className={`text-xs font-black ${bar.textColor} mb-1`}>{bar.percent}%</span>
+                          <div 
+                            className={`w-full ${bar.color} rounded-t-xl transition-all duration-300 shadow-sm relative ${clickedUasaBar === i ? 'ring-4 ring-offset-2 ring-purple-400 border border-purple-500' : 'hover:opacity-90'}`} 
+                            style={{ height: `${Math.max(10, Math.min(180, parseFloat(bar.percent) * 3.5))}px` }}
+                          >
+                            {clickedUasaBar === i && (
+                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold whitespace-nowrap shadow-2xl z-50 animate-bounce">
+                                {bar.count.toLocaleString()} rekod murid
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-black text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg mt-1">{bar.label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-slate-500 bg-[#F8FAFC] p-5 rounded-[1.5rem] border border-slate-100 gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-3 h-3 rounded-full bg-[#4F359B] shadow-sm animate-pulse"></div>
+                        <p className="font-bold">Gred Pencapaian Majoriti: <span className="text-slate-950 font-black ml-1">{uasaMetrics.majorityGrade} ({uasaMetrics.majorityPercent}%)</span></p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-purple-600 font-black">
+                        <IconMousePointer />
+                        <span>Klik pada bar graf untuk perincian bilangan murid ditaksir.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARTA TABURAN KELOMPOK AGREGAT UASA */}
+                  <div className="bg-white p-9 rounded-[2rem] shadow-sm border border-slate-100 space-y-8 relative w-full">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5">
+                        <h3 className="text-xl font-black text-slate-950 tracking-tight">Analisis Agregat Mengikut Kelompok UASA</h3>
+                        <p className="text-xs text-slate-400 font-medium italic">Perbandingan antara Kelompok Baik (A,B,C), Near Miss (D,E), Perlu Intervensi (F), dan Tidak Hadir (TH)</p>
+                      </div>
+                      <div className="bg-amber-50 text-amber-800 text-[10px] font-black px-4 py-2 rounded-2xl border border-amber-200 shadow-sm uppercase tracking-wider">
+                        Agregat Kelompok
+                      </div>
+                    </div>
+
+                    <div className="h-64 flex items-end justify-around px-8 pt-4 border-b border-slate-100 mb-4">
+                      {uasaGroupedBars.map((bar, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 group w-40 cursor-pointer relative" onClick={() => { setClickedUasaGroupedBar(clickedUasaGroupedBar === i ? null : i); setClickedUasaBar(null); }}>
+                          <span className={`text-sm font-black ${bar.textColor} mb-1`}>{bar.percent}%</span>
+                          <div 
+                            className={`w-20 ${bar.color} rounded-t-2xl transition-all duration-300 shadow-md relative ${clickedUasaGroupedBar === i ? 'ring-4 ring-offset-2 ring-purple-400 border border-purple-500' : 'hover:opacity-90'}`} 
+                            style={{ height: `${Math.max(10, Math.min(180, parseFloat(bar.percent) * 2.8))}px` }}
+                          >
+                            {clickedUasaGroupedBar === i && (
+                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap shadow-2xl z-50 animate-bounce">
+                                {bar.count.toLocaleString()} rekod murid
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-xs font-black text-slate-700 bg-slate-100 px-4 py-1.5 rounded-xl mt-1 text-center whitespace-nowrap">{bar.label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-slate-500 bg-[#F8FAFC] p-5 rounded-[1.5rem] border border-slate-100 gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-3.5 h-3.5 rounded-full bg-amber-500 shadow-sm animate-pulse"></div>
+                        <p className="font-bold">Kelompok Utama: <span className="text-slate-950 font-black ml-1">
+                          {uasaGroupedBars.length > 0 ? (
+                            [...uasaGroupedBars].sort((a, b) => parseFloat(b.percent) - parseFloat(a.percent))[0]?.label
+                          ) : 'N/A'} (
+                          {uasaGroupedBars.length > 0 ? (
+                            [...uasaGroupedBars].sort((a, b) => parseFloat(b.percent) - parseFloat(a.percent))[0]?.percent
+                          ) : '0.0'}%)
+                        </span></p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-purple-600 font-black">
+                        <IconMousePointer />
+                        <span>Sila klik pada mana-mana kelompok untuk melihat perincian rekod murid ditaksir.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* SISTEM PBD - TAB ANALISIS MATA PELAJARAN */}
+              {currentSystem === 'pbd' && !isLoadingPBD && rawPBDRows.length > 0 && pbdTab === 'subjek' && (
+                <div className="w-full space-y-8">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block">Kadar Pelepasan Tertinggi (TP3+)</span>
+                        <h4 className="text-lg font-extrabold text-[#4F359B] truncate max-w-[180px]">
+                          {pbdSubjectAnalysisList.length > 0 ? [...pbdSubjectAnalysisList].sort((a,b) => b.passRate - a.passRate)[0]?.subjectName : 'N/A'}
+                        </h4>
+                        <p className="text-xs font-bold text-emerald-600">
+                          {pbdSubjectAnalysisList.length > 0 ? [...pbdSubjectAnalysisList].sort((a,b) => b.passRate - a.passRate)[0]?.passRate : '0.0'}% Melepasi
+                        </p>
+                      </div>
+                      <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><IconCheckCircle /></div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block">Intervensi Tertinggi (TP1-2)</span>
+                        <h4 className="text-lg font-extrabold text-rose-600 truncate max-w-[180px]">
+                          {pbdSubjectAnalysisList.length > 0 ? [...pbdSubjectAnalysisList].sort((a,b) => b.critRate - a.critRate)[0]?.subjectName : 'N/A'}
+                        </h4>
+                        <p className="text-xs font-bold text-rose-500">
+                          {pbdSubjectAnalysisList.length > 0 ? [...pbdSubjectAnalysisList].sort((a,b) => b.critRate - a.critRate)[0]?.critRate : '0.0'}% Perlu Bimbingan
+                        </p>
+                      </div>
+                      <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl"><IconAlertTriangle /></div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block">Tahap Cemerlang Tertinggi (TP5-6)</span>
+                        <h4 className="text-lg font-extrabold text-purple-600 truncate max-w-[180px]">
+                          {pbdSubjectAnalysisList.length > 0 ? [...pbdSubjectAnalysisList].sort((a,b) => b.excelRate - a.excelRate)[0]?.subjectName : 'N/A'}
+                        </h4>
+                        <p className="text-xs font-bold text-purple-500">
+                          {pbdSubjectAnalysisList.length > 0 ? [...pbdSubjectAnalysisList].sort((a,b) => b.excelRate - a.excelRate)[0]?.excelRate : '0.0'}% Cemerlang
+                        </p>
+                      </div>
+                      <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl"><IconSparkles /></div>
+                    </div>
+                  </div>
+
+                  {/* Pemilih Metrik PBD */}
+                  <div className="bg-white p-5 rounded-3xl border border-slate-100 space-y-3">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Sila Pilih Kategori Analisis Kumpulan Subjek PBD</span>
+                    <div className="flex flex-wrap gap-3">
+                      {[
+                        { key: 'passRate', label: 'Melepasi TP3+ (Kuning)', color: 'bg-amber-400 border-amber-400 text-[#3B257B]', dot: 'bg-[#3B257B]' },
+                        { key: 'critRate', label: 'Perlu Intervensi TP1-2 (Merah)', color: 'bg-rose-500 border-rose-500 text-white', dot: 'bg-white' },
+                        { key: 'excelRate', label: 'Cemerlang TP5-6 (Hijau)', color: 'bg-emerald-500 border-emerald-500 text-white', dot: 'bg-white' }
+                      ].map(metric => (
+                        <button 
+                          key={metric.key}
+                          onClick={() => setActivePbdSubjectMetric(metric.key)}
+                          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all border shadow-sm flex items-center gap-1.5 ${activePbdSubjectMetric === metric.key ? metric.color : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${metric.dot}`}></span>
+                          {metric.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Grid Kad PBD */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Sila Klik Mana-mana Subjek Untuk Kajian Terperinci</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {pbdSubjectAnalysisList.map((sub, idx) => {
+                        const isSelected = selectedPbdAnalysisSubject === sub.subjectName;
+                        const activeLabel = activePbdSubjectMetric === 'passRate' ? 'Melepasi:' : activePbdSubjectMetric === 'critRate' ? 'Intervensi:' : 'Cemerlang:';
+                        const activeValue = sub[activePbdSubjectMetric];
+                        const barColor = activePbdSubjectMetric === 'passRate' ? 'bg-[#3B257B]' : activePbdSubjectMetric === 'critRate' ? 'bg-rose-500' : 'bg-emerald-500';
+
+                        return (
+                          <div 
+                            key={idx}
+                            onClick={() => { setSelectedPbdAnalysisSubject(sub.subjectName); setPbdFilters(prev => ({ ...prev, subject: sub.subjectName })); }}
+                            className={`p-4 rounded-2xl border transition-all cursor-pointer select-none ${isSelected ? 'bg-[#4F359B] text-white border-[#4F359B] shadow-lg scale-105' : 'bg-white text-slate-800 border-slate-200 hover:shadow-md'}`}
+                          >
+                            <h5 className="font-extrabold text-xs tracking-tight line-clamp-2 min-h-[2rem]">{sub.subjectName}</h5>
+                            <div className="mt-3 space-y-1 text-[10px]">
+                              <div className="flex justify-between font-bold"><span>{activeLabel}</span><span>{activeValue}%</span></div>
+                              <div className={`h-1.5 w-full rounded-full ${isSelected ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                <div className={`h-full rounded-full ${isSelected && activePbdSubjectMetric === 'passRate' ? 'bg-amber-400' : barColor}`} style={{ width: `${activeValue}%` }}></div>
+                              </div>
+                              <div className="text-[9px] opacity-75 pt-1">{sub.assessed.toLocaleString()} ditaksir</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Detail Drill Down PBD */}
+                  {selectedPbdSubjectDetails && (
+                    <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+                      <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 uppercase">Taburan TP Bagi Subjek Terpilih</h4>
+                          <p className="text-[10px] text-slate-400 font-semibold">{selectedPbdAnalysisSubject}</p>
+                        </div>
+                        <span className="text-[10px] bg-purple-50 text-[#4F359B] font-black px-2 py-1 rounded">N = {selectedPbdSubjectDetails.assessed.toLocaleString()}</span>
+                      </div>
+                      <div className="space-y-4">
+                        {[
+                          { label: 'TP 1', count: selectedPbdSubjectDetails.tp1, color: 'bg-rose-500' },
+                          { label: 'TP 2', count: selectedPbdSubjectDetails.tp2, color: 'bg-amber-500' },
+                          { label: 'TP 3', count: selectedPbdSubjectDetails.tp3, color: 'bg-emerald-500' },
+                          { label: 'TP 4', count: selectedPbdSubjectDetails.tp4, color: 'bg-blue-500' },
+                          { label: 'TP 5', count: selectedPbdSubjectDetails.tp5, color: 'bg-purple-500' },
+                          { label: 'TP 6', count: selectedPbdSubjectDetails.tp6, color: 'bg-amber-600' },
+                          { label: 'TD', count: selectedPbdSubjectDetails.td, color: 'bg-slate-400' }
+                        ].map((tp, idx) => {
+                          const pct = ((tp.count / (selectedPbdSubjectDetails.total || 1)) * 100).toFixed(1);
+                          return (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-bold"><span className="text-slate-700">{tp.label}</span><span className="text-slate-400">{tp.count.toLocaleString()} murid ({pct}%)</span></div>
+                              <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden"><div className={`h-full ${tp.color}`} style={{ width: `${pct}%` }}></div></div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+              {/* SISTEM UASA - TAB ANALISIS MATA PELAJARAN */}
+              {currentSystem === 'uasa' && !isLoadingUASA && rawUASARows.length > 0 && uasaTab === 'subjek' && (
+                <div className="w-full space-y-8">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block">Kelompok Baik Tertinggi (A, B, C)</span>
+                        <h4 className="text-lg font-extrabold text-[#4F359B] truncate max-w-[180px]">
+                          {uasaSubjectAnalysisList.length > 0 ? [...uasaSubjectAnalysisList].sort((a,b) => b.baikRate - a.baikRate)[0]?.subjectName : 'N/A'}
+                        </h4>
+                        <p className="text-xs font-bold text-emerald-600">
+                          {uasaSubjectAnalysisList.length > 0 ? [...uasaSubjectAnalysisList].sort((a,b) => b.baikRate - a.baikRate)[0]?.baikRate : '0.0'}% Prestasi Baik
+                        </p>
+                      </div>
+                      <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><IconCheckCircle /></div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block">Kelompok Near Miss Tertinggi (D, E)</span>
+                        <h4 className="text-lg font-extrabold text-amber-500 truncate max-w-[180px]">
+                          {uasaSubjectAnalysisList.length > 0 ? [...uasaSubjectAnalysisList].sort((a,b) => b.nearMissRate - a.nearMissRate)[0]?.subjectName : 'N/A'}
+                        </h4>
+                        <p className="text-xs font-bold text-amber-500">
+                          {uasaSubjectAnalysisList.length > 0 ? [...uasaSubjectAnalysisList].sort((a,b) => b.nearMissRate - a.nearMissRate)[0]?.nearMissRate : '0.0'}% Kelompok D-E
+                        </p>
+                      </div>
+                      <div className="p-3 bg-amber-50 text-amber-500 rounded-2xl"><IconSparkles /></div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block">Kadar Intervensi Tertinggi (Gred F)</span>
+                        <h4 className="text-lg font-extrabold text-rose-600 truncate max-w-[180px]">
+                          {uasaSubjectAnalysisList.length > 0 ? [...uasaSubjectAnalysisList].sort((a,b) => b.intervensiRate - a.intervensiRate)[0]?.subjectName : 'N/A'}
+                        </h4>
+                        <p className="text-xs font-bold text-rose-500">
+                          {uasaSubjectAnalysisList.length > 0 ? [...uasaSubjectAnalysisList].sort((a,b) => b.intervensiRate - a.intervensiRate)[0]?.intervensiRate : '0.0'}% Perlu Bimbingan
+                        </p>
+                      </div>
+                      <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl"><IconAlertTriangle /></div>
+                    </div>
+                  </div>
+
+                  {/* Pemilih Metrik UASA */}
+                  <div className="bg-white p-5 rounded-3xl border border-slate-100 space-y-3">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Sila Pilih Jenis Susunan Prestasi Kumpulan Subjek UASA</span>
+                    <div className="flex flex-wrap gap-3">
+                      {[
+                        { key: 'baikRate', label: 'Kelompok Baik Gred A-C (Hijau)', color: 'bg-emerald-500 border-emerald-500 text-white', dot: 'bg-white' },
+                        { key: 'nearMissRate', label: 'Kelompok Near Miss Gred D-E (Kuning)', color: 'bg-amber-400 border-amber-400 text-[#3B257B]', dot: 'bg-[#3B257B]' },
+                        { key: 'intervensiRate', label: 'Perlu Intervensi Gred F (Merah)', color: 'bg-rose-500 border-rose-500 text-white', dot: 'bg-white' }
+                      ].map(metric => (
+                        <button 
+                          key={metric.key}
+                          onClick={() => setActiveUasaSubjectMetric(metric.key)}
+                          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all border shadow-sm flex items-center gap-1.5 ${activeUasaSubjectMetric === metric.key ? metric.color : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${metric.dot}`}></span>
+                          {metric.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Grid Kad UASA */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Sila Pilih Mata Pelajaran Untuk Analisis Terperinci</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {uasaSubjectAnalysisList.map((sub, idx) => {
+                        const isSelected = selectedUasaAnalysisSubject === sub.subjectName;
+                        const activeLabel = activeUasaSubjectMetric === 'baikRate' ? 'Kelompok Baik:' : activeUasaSubjectMetric === 'nearMissRate' ? 'Near Miss:' : 'Intervensi:';
+                        const activeValue = sub[activeUasaSubjectMetric];
+                        const barColor = activeUasaSubjectMetric === 'baikRate' ? 'bg-emerald-500' : activeUasaSubjectMetric === 'nearMissRate' ? 'bg-[#3B257B]' : 'bg-rose-500';
+
+                        return (
+                          <div 
+                            key={idx}
+                            onClick={() => { setSelectedUasaAnalysisSubject(sub.subjectName); setUasaFilters(prev => ({ ...prev, subject: sub.subjectName })); }}
+                            className={`p-4 rounded-2xl border transition-all cursor-pointer select-none ${isSelected ? 'bg-[#4F359B] text-white border-[#4F359B] shadow-lg scale-105' : 'bg-white text-slate-800 border-slate-200 hover:shadow-md'}`}
+                          >
+                            <h5 className="font-extrabold text-xs tracking-tight line-clamp-2 min-h-[2rem]">{sub.subjectName}</h5>
+                            <div className="mt-3 space-y-1 text-[10px]">
+                              <div className="flex justify-between font-bold"><span>{activeLabel}</span><span>{activeValue}%</span></div>
+                              <div className={`h-1.5 w-full rounded-full ${isSelected ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                <div className={`h-full rounded-full ${isSelected && activeUasaSubjectMetric === 'nearMissRate' ? 'bg-amber-400' : barColor}`} style={{ width: `${activeValue}%` }}></div>
+                              </div>
+                              <div className="text-[9px] opacity-75 pt-1">{sub.assessed.toLocaleString()} murid ditaksir</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Detail Drill Down UASA */}
+                  {selectedUasaSubjectDetails && (
+                    <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+                      <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 uppercase">Perincian Taburan Gred / TH Bagi Subjek</h4>
+                          <p className="text-[10px] text-slate-400 font-semibold">{selectedUasaAnalysisSubject}</p>
+                        </div>
+                        <span className="text-[10px] bg-purple-50 text-[#4F359B] font-black px-2 py-1 rounded">Jumlah = {selectedUasaSubjectDetails.total.toLocaleString()} murid</span>
+                      </div>
+                      <div className="space-y-4">
+                        {[
+                          { label: 'Gred A (Kelompok Baik)', count: selectedUasaSubjectDetails.a, color: 'bg-emerald-500' },
+                          { label: 'Gred B (Kelompok Baik)', count: selectedUasaSubjectDetails.b, color: 'bg-emerald-400' },
+                          { label: 'Gred C (Kelompok Baik)', count: selectedUasaSubjectDetails.c, color: 'bg-emerald-300' },
+                          { label: 'Gred D (Kelompok Near Miss)', count: selectedUasaSubjectDetails.d, color: 'bg-amber-400' },
+                          { label: 'Gred E (Kelompok Near Miss)', count: selectedUasaSubjectDetails.e, color: 'bg-amber-300' },
+                          { label: 'Gred F (Kelompok Perlu Intervensi)', count: selectedUasaSubjectDetails.f, color: 'bg-rose-500' },
+                          { label: 'TH (Tidak Hadir)', count: selectedUasaSubjectDetails.th, color: 'bg-slate-400' }
+                        ].map((tp, idx) => {
+                          const pct = ((tp.count / (selectedUasaSubjectDetails.total || 1)) * 100).toFixed(1);
+                          return (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-bold"><span className="text-slate-700">{tp.label}</span><span className="text-slate-400">{tp.count.toLocaleString()} rekod ({pct}%)</span></div>
+                              <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden"><div className={`h-full ${tp.color}`} style={{ width: `${pct}%` }}></div></div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+              {/* KAWASAN JADUAL DETAIL (DINAMIK MENGIKUT SISTEM) */}
+              {currentSystem === 'pbd' && !isLoadingPBD && rawPBDRows.length > 0 && (
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900">Senarai Kumpulan Pentaksiran PBD</h3>
+                      <p className="text-xs text-slate-400 font-medium">Klik pada pengepala lajur untuk mengisih rekod secara menaik / menurun</p>
+                    </div>
+                    <span className="text-xs bg-slate-100 text-slate-600 px-3.5 py-1.5 rounded-xl font-bold">
+                      {filteredPBDRows.length} Baris Kumpulan Teragregat
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse font-sans">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-wider border-b border-slate-100">
+                          <th onClick={() => setPbdSortConfig({ key: 'school', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100 rounded-tl-xl">Kod & Nama Institusi <SortIcon active={pbdSortConfig.key === 'school'} direction={pbdSortConfig.direction} /></th>
+                          <th onClick={() => setPbdSortConfig({ key: 'ppd', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100">PPD <SortIcon active={pbdSortConfig.key === 'ppd'} direction={pbdSortConfig.direction} /></th>
+                          <th onClick={() => setPbdSortConfig({ key: 'level', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100">Tahun / Tingkatan <SortIcon active={pbdSortConfig.key === 'level'} direction={pbdSortConfig.direction} /></th>
+                          <th onClick={() => setPbdSortConfig({ key: 'subject', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100">Mata Pelajaran <SortIcon active={pbdSortConfig.key === 'subject'} direction={pbdSortConfig.direction} /></th>
+                          <th onClick={() => setPbdSortConfig({ key: 'tp12', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100">TP1-TP2 <SortIcon active={pbdSortConfig.key === 'tp12'} direction={pbdSortConfig.direction} /></th>
+                          <th onClick={() => setPbdSortConfig({ key: 'tp34', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100">TP3-TP4 <SortIcon active={pbdSortConfig.key === 'tp34'} direction={pbdSortConfig.direction} /></th>
+                          <th onClick={() => setPbdSortConfig({ key: 'tp56', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100">TP5-TP6 <SortIcon active={pbdSortConfig.key === 'tp56'} direction={pbdSortConfig.direction} /></th>
+                          <th onClick={() => setPbdSortConfig({ key: 'td', direction: pbdSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100 rounded-tr-xl">TD <SortIcon active={pbdSortConfig.key === 'td'} direction={pbdSortConfig.direction} /></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {sortedAndFilteredPBDRows.slice(0, 50).map((row, i) => (
+                          <tr key={i} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 font-bold text-slate-800">
+                              <span className="text-purple-600 block text-[10px] font-mono">{row.categories.schoolCode}</span>
+                              <span className="whitespace-normal break-words block text-xs max-w-[320px]">{row.categories.school}</span>
+                            </td>
+                            <td className="p-4 font-semibold text-slate-600 uppercase">{row.categories.ppd}</td>
+                            <td className="p-4 font-semibold text-slate-600">{row.categories.level}</td>
+                            <td className="p-4 font-bold text-slate-800">{row.categories.subject}</td>
+                            <td className="p-4 text-center font-bold text-rose-600">{(row.counts.tp1 + row.counts.tp2).toLocaleString()}</td>
+                            <td className="p-4 text-center font-bold text-blue-600">{(row.counts.tp3 + row.counts.tp4).toLocaleString()}</td>
+                            <td className="p-4 text-center font-bold text-emerald-600">{(row.counts.tp5 + row.counts.tp6).toLocaleString()}</td>
+                            <td className="p-4 text-center font-medium text-slate-400">{row.counts.td.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {sortedAndFilteredPBDRows.length > 50 && (
+                    <p className="text-[10px] text-slate-400 text-center font-bold">* Menunjukkan 50 baris kumpulan pertama sahaja bagi mengekalkan kestabilan kelajuan rendering portal.</p>
+                  )}
+                </div>
+              )}
+
+              {currentSystem === 'uasa' && !isLoadingUASA && rawUASARows.length > 0 && (
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900">Senarai Institusi / Kumpulan Pentaksiran UASA</h3>
+                      <p className="text-xs text-slate-400 font-medium">Klik pengepala lajur untuk mengisih rekod secara menaik / menurun</p>
+                    </div>
+                    <span className="text-xs bg-slate-100 text-slate-600 px-3.5 py-1.5 rounded-xl font-bold">
+                      {filteredUASARows.length} Baris Kumpulan Teragregat
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse font-sans">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-wider border-b border-slate-100">
+                          <th onClick={() => setUasaSortConfig({ key: 'school', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100 rounded-tl-xl">Kod & Nama Institusi <SortIcon active={uasaSortConfig.key === 'school'} direction={uasaSortConfig.direction} /></th>
+                          <th onClick={() => setUasaSortConfig({ key: 'ppd', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100">PPD <SortIcon active={uasaSortConfig.key === 'ppd'} direction={uasaSortConfig.direction} /></th>
+                          <th onClick={() => setUasaSortConfig({ key: 'level', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100">Tahun / Tingkatan <SortIcon active={uasaSortConfig.key === 'level'} direction={uasaSortConfig.direction} /></th>
+                          <th onClick={() => setUasaSortConfig({ key: 'subject', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 cursor-pointer hover:bg-slate-100">Mata Pelajaran <SortIcon active={uasaSortConfig.key === 'subject'} direction={uasaSortConfig.direction} /></th>
+                          <th onClick={() => setUasaSortConfig({ key: 'baik', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100 text-emerald-700 bg-emerald-50/50">Kelompok Baik (A, B, C) <SortIcon active={uasaSortConfig.key === 'baik'} direction={uasaSortConfig.direction} /></th>
+                          <th onClick={() => setUasaSortConfig({ key: 'nearMiss', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100 text-amber-700 bg-amber-50/50">Kelompok Near Miss (D, E) <SortIcon active={uasaSortConfig.key === 'nearMiss'} direction={uasaSortConfig.direction} /></th>
+                          <th onClick={() => setUasaSortConfig({ key: 'intervensi', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100 text-rose-700 bg-rose-50/50">Intervensi (F) <SortIcon active={uasaSortConfig.key === 'intervensi'} direction={uasaSortConfig.direction} /></th>
+                          <th onClick={() => setUasaSortConfig({ key: 'th', direction: uasaSortConfig.direction === 'asc' ? 'desc' : 'asc' })} className="p-4 text-center cursor-pointer hover:bg-slate-100 rounded-tr-xl">TH <SortIcon active={uasaSortConfig.key === 'th'} direction={uasaSortConfig.direction} /></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {sortedAndFilteredUASARows.slice(0, 50).map((row, i) => {
+                          const baik = row.counts.a + row.counts.b + row.counts.c;
+                          const nearMiss = row.counts.d + row.counts.e;
+                          const intervensi = row.counts.f;
+                          return (
+                            <tr key={i} className="hover:bg-slate-50 transition-colors">
+                              <td className="p-4 font-bold text-slate-800">
+                                <span className="text-purple-600 block text-[10px] font-mono">{row.categories.schoolCode}</span>
+                                <span className="whitespace-normal break-words block text-xs max-w-[320px]">{row.categories.school}</span>
+                              </td>
+                              <td className="p-4 font-semibold text-slate-600 uppercase">{row.categories.ppd}</td>
+                              <td className="p-4 font-semibold text-slate-600">{row.categories.level}</td>
+                              <td className="p-4 font-bold text-slate-800">{row.categories.subject}</td>
+                              <td className="p-4 text-center font-extrabold text-emerald-600 bg-emerald-50/20">{baik.toLocaleString()}</td>
+                              <td className="p-4 text-center font-extrabold text-amber-500 bg-amber-50/20">{nearMiss.toLocaleString()}</td>
+                              <td className="p-4 text-center font-extrabold text-rose-600 bg-rose-50/20">{intervensi.toLocaleString()}</td>
+                              <td className="p-4 text-center font-medium text-slate-400">{row.counts.th.toLocaleString()}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {sortedAndFilteredUASARows.length > 50 && (
+                    <p className="text-[10px] text-slate-400 text-center font-bold">* Memaparkan 50 baris kumpulan pertama sahaja bagi memastikan kelancaran rendering portal.</p>
+                  )}
+                </div>
+              )}
+
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
