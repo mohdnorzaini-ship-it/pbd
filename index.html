@@ -323,6 +323,95 @@
 
     </div>
 
+    <!-- ================= MODAL TETAPAN CONFIG FIREBASE ================= -->
+    <div id="modal-config" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <!-- Header Modal -->
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                    <i class="fas fa-cog text-blue-600"></i>
+                    <span>Tetapan Konfigurasi Firebase</span>
+                </h3>
+                <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Isi Modal -->
+            <div class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    Uruskan sambungan pangkalan data anda di bawah. Anda boleh menukar konfigurasi global automatik platform atau meletakkan kredensial projek Firebase anda sendiri secara manual.
+                </p>
+
+                <!-- Pilihan Tetapan -->
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                        <input type="radio" id="config-opt-auto" name="config-source" value="auto" checked onchange="toggleConfigSourceView()" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300">
+                        <label for="config-opt-auto" class="flex-1 cursor-pointer">
+                            <span class="block text-xs font-bold text-blue-800">Gunakan Konfigurasi Platform (Automatik)</span>
+                            <span class="block text-[10px] text-blue-500">Menghubungkan terus ke Firebase bersepadu dalam aplikasi ini.</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <input type="radio" id="config-opt-manual" name="config-source" value="manual" onchange="toggleConfigSourceView()" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300">
+                        <label for="config-opt-manual" class="flex-1 cursor-pointer">
+                            <span class="block text-xs font-bold text-slate-700">Masukkan Konfigurasi Sendiri (Manual)</span>
+                            <span class="block text-[10px] text-slate-400">Sesuai jika anda ingin menyimpan data ke projek Firebase peribadi anda sendiri.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Input Kredensial Manual -->
+                <div id="manual-config-inputs" class="space-y-3 pt-2 hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">API Key</label>
+                            <input type="text" id="cfg-apiKey" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono" placeholder="AIzaSy...">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Auth Domain</label>
+                            <input type="text" id="cfg-authDomain" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono" placeholder="project.firebaseapp.com">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Project ID</label>
+                            <input type="text" id="cfg-projectId" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono" placeholder="project-id-123">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Storage Bucket</label>
+                            <input type="text" id="cfg-storageBucket" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono" placeholder="project.appspot.com">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Messaging Sender ID</label>
+                            <input type="text" id="cfg-messagingSenderId" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono" placeholder="1234567890">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">App ID</label>
+                            <input type="text" id="cfg-appId" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono" placeholder="1:123:web:abc">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer Modal -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
+                <button onclick="toggleConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
+                    Batal
+                </button>
+                <button onclick="saveFirebaseConfig()" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-colors">
+                    Simpan & Muat Semula
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BUTANG TERAPUNG KOG TETAPAN (Floating settings cog) -->
+    <button onclick="toggleConfigModal()" class="fixed bottom-5 left-5 z-40 h-10 w-10 bg-slate-800 hover:bg-slate-950 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110" title="Tetapan Firebase">
+        <i class="fas fa-cog text-base animate-spin" style="animation-duration: 10s;"></i>
+    </button>
+
     <!-- Info Footer Hakcipta -->
     <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 w-full mt-12">
         <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -340,11 +429,49 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Konfigurasi Global Firebase dari persekitaran web
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // --- STREAMING_CHUNK: Initializing Firebase configuration logic... ---
+        // Baca atau tentukan konfigurasi Firebase
+        let firebaseConfig;
+        const savedCustomConfig = localStorage.getItem('custom_firebase_config');
+        
+        if (savedCustomConfig) {
+            try {
+                firebaseConfig = JSON.parse(savedCustomConfig);
+                console.log("Menggunakan konfigurasi Firebase manual (Simpanan Pengguna).");
+            } catch (e) {
+                console.warn("Gagal memproses konfigurasi Firebase manual. Kembali ke mod automatik.", e);
+            }
+        }
+
+        // Jika tiada konfigurasi manual, gunakan konfigurasi utama yang baru diberikan
+        if (!firebaseConfig) {
+            firebaseConfig = {
+                apiKey: "AIzaSyBUdjM6ezrsoNcJ5WEMEUqNJIjoUu_yQYk",
+                authDomain: "dashboard-pbd-64e15.firebaseapp.com",
+                projectId: "dashboard-pbd-64e15",
+                storageBucket: "dashboard-pbd-64e15.firebasestorage.app",
+                messagingSenderId: "352363531733",
+                appId: "1:352363531733:web:8e45e274f6d882458b015c",
+                measurementId: "G-RKKGHTFGB6"
+            };
+            console.log("Menggunakan konfigurasi Firebase rasmi utama (dashboard-pbd-64e15).");
+        }
+
+        // Mulakan Firebase App secara selamat
+        let app, auth, db;
+        let isFirebaseInitialized = false;
+
+        try {
+            if (firebaseConfig && firebaseConfig.apiKey) {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseInitialized = true;
+            }
+        } catch (error) {
+            console.error("Gagal memulakan Firebase SDK:", error);
+        }
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // State Aplikasi Global
@@ -365,6 +492,15 @@
 
         // --- ATURAN PERMULAAN AUTENTIKASI ANONYMOUS ---
         async function initAuth() {
+            if (!isFirebaseInitialized) {
+                console.warn("Firebase tidak diaktifkan. Bertukar terus ke mod simulasi.");
+                document.getElementById('global-loading').classList.add('hidden');
+                switchScreen('screen-login');
+                triggerFallbackStats();
+                triggerFallbackLogs();
+                return;
+            }
+
             try {
                 // Sentiasa mulakan sambungan pangkalan data secara senyap menggunakan Anonymous Auth
                 await signInAnonymously(auth);
@@ -376,29 +512,33 @@
         // Jalankan Autentikasi Sebaik Saja Bermula
         initAuth();
 
-        // Pantau Status Autentikasi Pengguna
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Sembunyikan skrin loading global selepas bersambung dengan jayanya
-                document.getElementById('global-loading').classList.add('hidden');
-                
-                // Semak sama ada sesi pengguna aktif tersimpan secara lokal (Auto login jika ada)
-                const savedSession = localStorage.getItem('pbd_session_email');
-                if (savedSession) {
-                    currentEmail = savedSession;
-                    fetchAndLoadUserProfile(savedSession, null, false);
-                } else {
-                    switchScreen('screen-login');
-                }
+        if (isFirebaseInitialized) {
+            // Pantau Status Autentikasi Pengguna
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Sembunyikan skrin loading global selepas bersambung dengan jayanya
+                    document.getElementById('global-loading').classList.add('hidden');
+                    
+                    // Semak sama ada sesi pengguna aktif tersimpan secara lokal (Auto login jika ada)
+                    const savedSession = localStorage.getItem('pbd_session_email');
+                    if (savedSession) {
+                        currentEmail = savedSession;
+                        fetchAndLoadUserProfile(savedSession, null, false);
+                    } else {
+                        switchScreen('screen-login');
+                    }
 
-                // Mulakan Pemerhatian Firebase Real-time untuk statistik
-                setupRealtimeStats();
-            }
-        });
+                    // Mulakan Pemerhatian Firebase Real-time untuk statistik
+                    setupRealtimeStats();
+                }
+            });
+        }
 
         // --- STREAMING_CHUNK: Setting up real-time handlers... ---
         // --- SISTEM PEMERHATIAN REAL-TIME DATA (Strict path & No Complex Queries) ---
         function setupRealtimeStats() {
+            if (!isFirebaseInitialized) return;
+
             const usersCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'delima_users');
             const logsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'delima_logs');
 
@@ -625,6 +765,11 @@
 
         // --- DAPATKAN DAN VERIFIKASI PROFIL PENGGUNA DARI FIRESTORE / TEMPATAN ---
         async function fetchAndLoadUserProfile(email, password = null, isExplicitLogin = false) {
+            if (!isFirebaseInitialized) {
+                executeLocalFallbackLogin(email, password, isExplicitLogin);
+                return;
+            }
+
             try {
                 // Santisasi id dokumen dengan menggantikan aksara khas e-mel
                 const docId = email.replace(/[@.]/g, "_");
@@ -686,8 +831,6 @@
             } catch (error) {
                 console.warn("Ralat pangkalan data, bertukar ke simulasi tempatan:", error);
                 showToast("Simulasi Tempatan", "Menggunakan pangkalan data simulasi untuk akaun ini.");
-                
-                // HALANGAN UTAMA DISELESAIKAN: Jangan sekat pengguna di login screen! Lari ke simulasi tempatan yang lancar!
                 executeLocalFallbackLogin(email, password, isExplicitLogin);
             }
         }
@@ -716,6 +859,25 @@
                 visitCount: 1,
                 lastLogin: new Date().toISOString()
             };
+
+            if (!isFirebaseInitialized) {
+                // Simpan dalam localStorage simulasi secara terus
+                saveUserLocally(currentEmail, newProfile);
+                
+                const sessionKey = `pbd_session_active_${docId}`;
+                sessionStorage.setItem(sessionKey, 'true');
+
+                localStorage.setItem('pbd_session_email', currentEmail);
+                activeDelimaUser = newProfile;
+
+                document.getElementById('form-register').reset();
+                switchScreen('screen-dashboard');
+                showToast("Simulasi Tempatan", "Profil disimpan secara selamat di pelayan simulasi semasa.");
+
+                triggerFallbackStats();
+                triggerFallbackLogs();
+                return;
+            }
 
             try {
                 const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'delima_users', docId);
@@ -765,6 +927,7 @@
 
         // --- REKOD LOG MASUK TERKINI ---
         async function recordLoginLog(email, name) {
+            if (!isFirebaseInitialized) return;
             try {
                 const logsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'delima_logs');
                 await addDoc(logsCollectionRef, {
@@ -783,7 +946,6 @@
             if (!activeDelimaUser) return;
 
             // 1. Kemaskini Kad Profil (Mengecil dan tiada DELIMa)
-            // Format yang dikehendaki: JPN PERAK-MOHD NORZAINI BIN MOHD ZAIN-CM36
             const formattedIdentity = `${activeDelimaUser.state}-${activeDelimaUser.name}-${activeDelimaUser.code}`;
             document.getElementById('card-fullname').innerText = formattedIdentity;
 
@@ -929,6 +1091,78 @@
             currentEmail = "";
             switchScreen('screen-login');
             showToast("Log Keluar Berjaya", "Sesi log masuk anda telah ditamatkan.");
+        }
+
+        // --- STREAMING_CHUNK: Managing settings modal... ---
+        // --- INTERAKSI & PENGURUSAN TETAPAN FIREBASE CONFIG ---
+        window.toggleConfigModal = function() {
+            const modal = document.getElementById('modal-config');
+            if (modal.classList.contains('hidden')) {
+                // Muat nilai konfigurasi semasa jika ada di dalam input form
+                const savedConfig = localStorage.getItem('custom_firebase_config');
+                if (savedConfig) {
+                    try {
+                        const parsed = JSON.parse(savedConfig);
+                        document.getElementById('config-opt-manual').checked = true;
+                        document.getElementById('manual-config-inputs').classList.remove('hidden');
+                        document.getElementById('cfg-apiKey').value = parsed.apiKey || '';
+                        document.getElementById('cfg-authDomain').value = parsed.authDomain || '';
+                        document.getElementById('cfg-projectId').value = parsed.projectId || '';
+                        document.getElementById('cfg-storageBucket').value = parsed.storageBucket || '';
+                        document.getElementById('cfg-messagingSenderId').value = parsed.messagingSenderId || '';
+                        document.getElementById('cfg-appId').value = parsed.appId || '';
+                    } catch (e) {}
+                } else {
+                    document.getElementById('config-opt-auto').checked = true;
+                    document.getElementById('manual-config-inputs').classList.add('hidden');
+                }
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        window.toggleConfigSourceView = function() {
+            const isManual = document.getElementById('config-opt-manual').checked;
+            const inputsDiv = document.getElementById('manual-config-inputs');
+            if (isManual) {
+                inputsDiv.classList.remove('hidden');
+            } else {
+                inputsDiv.classList.add('hidden');
+            }
+        }
+
+        window.saveFirebaseConfig = function() {
+            const isAuto = document.getElementById('config-opt-auto').checked;
+            
+            if (isAuto) {
+                // Padam konfigurasi manual dan guna automatik semula
+                localStorage.removeItem('custom_firebase_config');
+                showToast("Berjaya Disimpan", "Menggunakan konfigurasi automatik. Memuat semula aplikasi...");
+            } else {
+                // Simpan konfigurasi manual yang baru dimasukkan
+                const customConfig = {
+                    apiKey: document.getElementById('cfg-apiKey').value.trim(),
+                    authDomain: document.getElementById('cfg-authDomain').value.trim(),
+                    projectId: document.getElementById('cfg-projectId').value.trim(),
+                    storageBucket: document.getElementById('cfg-storageBucket').value.trim(),
+                    messagingSenderId: document.getElementById('cfg-messagingSenderId').value.trim(),
+                    appId: document.getElementById('cfg-appId').value.trim()
+                };
+
+                if (!customConfig.apiKey || !customConfig.projectId) {
+                    showToast("Isian Tidak Lengkap", "API Key dan Project ID adalah wajib diisi untuk konfigurasi manual!");
+                    return;
+                }
+
+                localStorage.setItem('custom_firebase_config', JSON.stringify(customConfig));
+                showToast("Berjaya Disimpan", "Menggunakan konfigurasi manual baru. Memuat semula aplikasi...");
+            }
+
+            // Muat semula aplikasi untuk mengaktifkan Firebase Config yang baru
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
         }
 
     </script>
